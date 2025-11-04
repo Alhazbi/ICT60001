@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Internal Architecture - Complete Animation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0e27;
+            color: white;
+            overflow: hidden;
+        }
+
+        #scene {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #main-area {
+            flex: 1;
+            position: relative;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #caption {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            padding: 30px 40px;
+            text-align: center;
+            font-size: 1.3em;
+            line-height: 1.8;
+            border-top: 3px solid #667eea;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .code-box {
+            background: #0d1117;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 30px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0;
+        }
+
+        .code-line {
+            margin: 10px 0;
+            transition: all 0.5s;
+        }
+
+        .code-line.highlight {
+            color: #ffd93d;
+            text-shadow: 0 0 10px #ffd93d;
+        }
+
+        .transformation {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            opacity: 0;
+        }
+
+        .transform-stage {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .stage-label {
+            color: #667eea;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        #cpu-chip {
+            background: linear-gradient(135deg, #1a1f3a 0%, #2a2f4a 100%);
+            border: 5px solid #667eea;
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            width: 1000px;
+            height: 700px;
+            box-shadow: 0 0 50px rgba(102, 126, 234, 0.5);
+            opacity: 0;
+        }
+
+        .cpu-label {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .component {
+            position: absolute;
+            background: rgba(102, 126, 234, 0.1);
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.5s;
+            opacity: 0;
+        }
+
+        .component.active {
+            border-color: #ffd93d;
+            background: rgba(255, 217, 61, 0.2);
+            box-shadow: 0 0 30px rgba(255, 217, 61, 0.6);
+            transform: scale(1.05);
+        }
+
+        .component-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .component.active .component-title {
+            color: #ffd93d;
+        }
+
+        .component-value {
+            font-family: 'Courier New', monospace;
+            color: #43e97b;
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+
+        /* Component positions */
+        .control-unit {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 80px;
+        }
+
+        .registers {
+            top: 140px;
+            left: 50px;
+            width: 180px;
+            height: 200px;
+        }
+
+        .alu-box {
+            top: 140px;
+            right: 50px;
+            width: 200px;
+            height: 250px;
+        }
+
+        .adder {
+            width: 150px;
+            height: 60px;
+            margin: 10px auto;
+            background: rgba(245, 87, 108, 0.1);
+            border: 2px solid #f5576c;
+        }
+
+        .shifter {
+            width: 150px;
+            height: 60px;
+            margin: 10px auto;
+            background: rgba(67, 233, 123, 0.1);
+            border: 2px solid #43e97b;
+        }
+
+        .counter {
+            bottom: 50px;
+            left: 50px;
+            width: 150px;
+            height: 80px;
+        }
+
+        .microcode {
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 120px;
+        }
+
+        .encoder-decoder {
+            bottom: 50px;
+            right: 50px;
+            width: 180px;
+            height: 100px;
+        }
+
+        .cache {
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 180px;
+        }
+
+        .cache-level {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #43e97b;
+            border-radius: 5px;
+            padding: 6px;
+            margin: 4px 0;
+            font-size: 0.8em;
+        }
+
+        .memory-box {
+            position: absolute;
+            left: 50%;
+            bottom: -150px;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 100px;
+            background: rgba(67, 233, 123, 0.1);
+            border: 3px solid #43e97b;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            opacity: 0;
+        }
+
+        .register-slot {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #667eea;
+            border-radius: 5px;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .data-packet {
+            position: absolute;
+            background: #ffd93d;
+            color: #0a0e27;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9em;
+            box-shadow: 0 5px 20px rgba(255, 217, 61, 0.8);
+            z-index: 1000;
+            opacity: 0;
+        }
+
+        .arrow {
+            position: absolute;
+            z-index: 10;
+            opacity: 0;
+        }
+
+        .arrow-line {
+            stroke: #ffd93d;
+            stroke-width: 3;
+            fill: none;
+            stroke-dasharray: 10;
+            animation: dash 1s linear infinite;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        .binary-display {
+            font-family: 'Courier New', monospace;
+            color: #43e97b;
+            font-size: 0.85em;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+
+        .micro-step {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px;
+            margin: 3px 0;
+            border-radius: 3px;
+            font-size: 0.75em;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .micro-step.active {
+            background: rgba(255, 217, 61, 0.3);
+            border-left: 3px solid #ffd93d;
+        }
+
+        .device-icon {
+            position: absolute;
+            right: -200px;
+            top: 300px;
+            width: 120px;
+            height: 120px;
+            background: rgba(102, 126, 234, 0.1);
+            border: 3px solid #667eea;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            opacity: 0;
+        }
+
+        .screen-icon {
+            position: absolute;
+            left: -250px;
+            top: 250px;
+            width: 180px;
+            height: 140px;
+            background: #0d1117;
+            border: 3px solid #43e97b;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            opacity: 0;
+            flex-direction: column;
+        }
+
+        .instruction-highlight {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 217, 61, 0.2);
+            border: 2px solid #ffd93d;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            opacity: 0;
+        }
+
+        .loop-bubble {
+            position: absolute;
+            border: 3px dashed #ffd93d;
+            border-radius: 15px;
+            opacity: 0;
+            animation: bubblePulse 2s infinite;
+        }
+
+        @keyframes bubblePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        button {
+            position: fixed;
+            bottom: 150px;
+            right: 40px;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            z-index: 2000;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .fade-in {
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .slide-in {
+            animation: slideIn 1s forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes movePacket {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            10%, 90% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="scene">
+        <div id="main-area"></div>
+        <div id="caption">
+            Ready to explore how code becomes machine execution...
+        </div>
+    </div>
+
+    <button onclick="startAnimation()" id="startBtn">▶️ Start Animation</button>
+
+    <script>
+        let currentStep = 0;
+        let isAnimating = false;
+
+        function updateCaption(text) {
+            document.getElementById('caption').innerHTML = text;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function startAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            document.getElementById('startBtn').disabled = true;
+            
+            const mainArea = document.getElementById('main-area');
+            mainArea.innerHTML = '';
+
+            // Step 1: Code to Machine Code
+            await step1_codeToMachine();
+            await sleep(2000);
+            mainArea.innerHTML = '';
+
+            // Step 2: Inside the CPU
+            await step2_insideCPU();
+            await sleep(2000);
+
+            // Step 3: Load values into registers
+            await step3_loadRegisters();
+            await sleep(2000);
+
+            // Step 3b: Demonstrate cache benefit
+            await step3b_cacheDemo();
+            await sleep(2000);
+
+            // Step 4: Use adder
+            await step4_useAdder();
+            await sleep(2000);
+
+            // Step 5: Use shifter
+            await step5_useShifter();
+            await sleep(2000);
+
+            // Step 6: Counter for loop
+            await step6_counterLoop();
+            await sleep(2000);
+
+            // Step 7: Microcode
+            await step7_microcode();
+            await sleep(2000);
+
+            // Step 8: Encoder/Decoder interrupt
+            await step8_interrupt();
+            await sleep(2000);
+
+            // Step 9: Machine code driving everything
+            await step9_machineCodeDriving();
+            await sleep(2000);
+
+            // Step 10: Final result
+            await step10_finalResult();
+
+            document.getElementById('startBtn').disabled = false;
+            isAnimating = false;
+        }
+
+        async function step1_codeToMachine() {
+            updateCaption("You write high-level code. The compiler turns it into assembly, then machine code (1s and 0s). That's what the CPU actually runs.");
+
+            const mainArea = document.getElementById('main-area');
+            
+            // Code box
+            const codeBox = document.createElement('div');
+            codeBox.className = 'code-box fade-in';
+            codeBox.innerHTML = `
+                <div class="code-line highlight">sum = a + b;</div>
+            `;
+            mainArea.appendChild(codeBox);
+            await sleep(1500);
+
+            // Transformation
+            const transform = document.createElement('div');
+            transform.className = 'transformation fade-in';
+            transform.innerHTML = `
+                <div class="transform-stage">
+                    <div class="stage-label">High-Level Code</div>
+                    sum = a + b;
+                </div>
+                <div style="font-size: 2em; margin: 20px;">⬇️</div>
+                <div class="transform-stage">
+                    <div class="stage-label">Assembly</div>
+                    MOV R1, a<br>
+                    ADD R1, b<br>
+                    MOV sum, R1
+                </div>
+                <div style="font-size: 2em; margin: 20px;">⬇️</div>
+                <div class="transform-stage">
+                    <div class="stage-label">Machine Code</div>
+                    10110000 00000001<br>
+                    00000001 11000010
+                </div>
+            `;
+            mainArea.appendChild(transform);
+            await sleep(2000);
+
+            // CPU chip on right
+            const cpuChip = document.createElement('div');
+            cpuChip.id = 'cpu-chip';
+            cpuChip.style.position = 'absolute';
+            cpuChip.style.right = '5%';
+            cpuChip.style.width = '300px';
+            cpuChip.style.height = '300px';
+            cpuChip.className = 'fade-in';
+            cpuChip.innerHTML = '<div class="cpu-label">CPU</div>';
+            mainArea.appendChild(cpuChip);
+            await sleep(1000);
+
+            // Animate machine code packets into CPU
+            for (let i = 0; i < 3; i++) {
+                const packet = createPacket('10110000', 
+                    window.innerWidth / 2, 
+                    window.innerHeight / 2 + 100,
+                    window.innerWidth - 250,
+                    window.innerHeight / 2);
+                mainArea.appendChild(packet);
+                await sleep(500);
+            }
+        }
+
+        async function step2_insideCPU() {
+            updateCaption("Inside the CPU we have: Registers (fast SRAM) to hold values, Cache Memory (L1/L2/L3) for fast data access, ALU (adders and shift registers) to do math, Counters to track steps and loops, Control Unit and Microcode to coordinate everything, Encoders/Decoders to talk to memory and devices.");
+
+            const mainArea = document.getElementById('main-area');
+            
+            const cpuChip = document.createElement('div');
+            cpuChip.id = 'cpu-chip';
+            cpuChip.className = 'fade-in';
+            cpuChip.innerHTML = '<div class="cpu-label">CPU Internal Architecture</div>';
+            mainArea.appendChild(cpuChip);
+
+            await sleep(500);
+
+            // Add components one by one
+            const components = [
+                { cls: 'control-unit', title: 'Control Unit', desc: 'Orchestrates execution' },
+                { cls: 'cache', title: 'Cache Memory', desc: 'L1: 32KB<br>L2: 256KB<br>L3: 8MB' },
+                { cls: 'registers', title: 'Registers (SRAM)', desc: 'R1: 0<br>R2: 0<br>R3: 0' },
+                { cls: 'alu-box', title: 'ALU', inner: '<div class="adder"><div class="component-title">Adder</div></div><div class="shifter"><div class="component-title">Shifter</div></div>' },
+                { cls: 'counter', title: 'Counter', desc: 'i = 0' },
+                { cls: 'microcode', title: 'Microcode ROM', desc: 'Instruction sequences' },
+                { cls: 'encoder-decoder', title: 'Encoder/Decoder', desc: 'I/O signals' }
+            ];
+
+            for (const comp of components) {
+                const el = document.createElement('div');
+                el.className = `component ${comp.cls} fade-in`;
+                el.innerHTML = `
+                    <div class="component-title">${comp.title}</div>
+                    ${comp.desc ? `<div style="font-size: 0.85em; margin-top: 5px;">${comp.desc}</div>` : ''}
+                    ${comp.inner || ''}
+                `;
+                cpuChip.appendChild(el);
+                await sleep(400);
+            }
+
+            // Add memory
+            const memory = document.createElement('div');
+            memory.className = 'memory-box fade-in';
+            memory.innerHTML = `
+                <div class="component-title">Main Memory (DRAM)</div>
+                <div style="font-size: 0.9em; margin-top: 10px;">a = 5, b = 7</div>
+            `;
+            cpuChip.appendChild(memory);
+        }
+
+        async function step3_loadRegisters() {
+            updateCaption("Machine code tells the CPU to load data from main memory (DRAM). Data first goes to Cache Memory for fast access, then into Registers (SRAM). Cache stores frequently used data. Now R1 = 5 and R2 = 7.");
+
+            const cache = document.querySelector('.cache');
+            cache.classList.add('active');
+            
+            await sleep(500);
+
+            // Animate data packets from memory to cache first
+            const memoryRect = document.querySelector('.memory-box').getBoundingClientRect();
+            const cacheRect = cache.getBoundingClientRect();
+
+            // First to cache
+            const packetToCache1 = createPacket('a=5', memoryRect.left + 150, memoryRect.top + 50, cacheRect.left + 100, cacheRect.top + 60);
+            document.getElementById('main-area').appendChild(packetToCache1);
+            await sleep(800);
+
+            const packetToCache2 = createPacket('b=7', memoryRect.left + 150, memoryRect.top + 50, cacheRect.left + 100, cacheRect.top + 100);
+            document.getElementById('main-area').appendChild(packetToCache2);
+            await sleep(800);
+
+            // Update cache display
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level" style="border-color: #ffd93d;">L1: a=5, b=7 ✓</div>
+                <div class="cache-level">L2: Fast access</div>
+                <div class="cache-level">L3: Shared cache</div>
+            `;
+
+            await sleep(500);
+
+            // Now from cache to registers
+            const registers = document.querySelector('.registers');
+            const regRect = registers.getBoundingClientRect();
+            registers.classList.add('active');
+
+            const packet1 = createPacket('5', cacheRect.left + 100, cacheRect.top + 60, regRect.left + 90, regRect.top + 60);
+            document.getElementById('main-area').appendChild(packet1);
+            await sleep(800);
+
+            const packet2 = createPacket('7', cacheRect.left + 100, cacheRect.top + 100, regRect.left + 90, regRect.top + 100);
+            document.getElementById('main-area').appendChild(packet2);
+            await sleep(800);
+
+            // Update register display
+            registers.innerHTML = `
+                <div class="component-title">Registers (SRAM)</div>
+                <div class="register-slot">R1: <span style="color: #43e97b;">5</span></div>
+                <div class="register-slot">R2: <span style="color: #43e97b;">7</span></div>
+                <div class="register-slot">R3: 0</div>
+            `;
+
+            await sleep(500);
+            registers.classList.remove('active');
+            cache.classList.remove('active');
+        }
+
+        async function step3b_cacheDemo() {
+            updateCaption("Cache Hit vs Cache Miss: When data is already in cache (Hit), access is 100x faster! When data is not in cache (Miss), CPU must fetch from slow RAM. Cache stores frequently used data to speed up the CPU.");
+
+            const cache = document.querySelector('.cache');
+            const registers = document.querySelector('.registers');
+            const memory = document.querySelector('.memory-box');
+
+            // Scenario 1: Cache HIT (fast)
+            const instruction1 = document.createElement('div');
+            instruction1.className = 'instruction-highlight fade-in';
+            instruction1.innerHTML = 'LOAD R1, a  <span style="color: #43e97b;">← Cache HIT! ⚡ Fast!</span>';
+            document.getElementById('cpu-chip').appendChild(instruction1);
+
+            cache.classList.add('active');
+            await sleep(300);
+
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level" style="border-color: #43e97b; background: rgba(67, 233, 123, 0.2);">
+                    L1: a=5 ✓ <span style="color: #43e97b;">FOUND!</span>
+                </div>
+                <div class="cache-level">L2: Fast access</div>
+                <div class="cache-level">L3: Shared cache</div>
+                <div style="font-size: 0.8em; margin-top: 8px; color: #43e97b;">Access time: 1 cycle</div>
+            `;
+
+            const cacheRect = cache.getBoundingClientRect();
+            const regRect = registers.getBoundingClientRect();
+            const packetHit = createPacket('5 ⚡', cacheRect.left + 100, cacheRect.top + 90, regRect.left + 90, regRect.top + 60);
+            document.getElementById('main-area').appendChild(packetHit);
+
+            await sleep(1500);
+            cache.classList.remove('active');
+            instruction1.remove();
+
+            await sleep(800);
+
+            // Scenario 2: Cache MISS (slow)
+            const instruction2 = document.createElement('div');
+            instruction2.className = 'instruction-highlight fade-in';
+            instruction2.innerHTML = 'LOAD R2, c  <span style="color: #f5576c;">← Cache MISS! 🐌 Slow...</span>';
+            document.getElementById('cpu-chip').appendChild(instruction2);
+
+            cache.classList.add('active');
+            await sleep(300);
+
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level" style="border-color: #f5576c; background: rgba(245, 87, 108, 0.2);">
+                    L1: c=? <span style="color: #f5576c;">NOT FOUND!</span>
+                </div>
+                <div class="cache-level">L2: Checking...</div>
+                <div class="cache-level">L3: Not there either</div>
+                <div style="font-size: 0.8em; margin-top: 8px; color: #f5576c;">Must fetch from RAM!</div>
+            `;
+
+            await sleep(1000);
+
+            // Fetch from RAM (slow)
+            memory.classList.add('active');
+            const memoryRect = memory.getBoundingClientRect();
+
+            const packetMiss1 = createPacket('c=10 🐌', memoryRect.left + 150, memoryRect.top + 50, cacheRect.left + 100, cacheRect.top + 90);
+            document.getElementById('main-area').appendChild(packetMiss1);
+            await sleep(1500);
+
+            // Update cache with new data
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level" style="border-color: #43e97b;">L1: c=10 ✓ (cached now)</div>
+                <div class="cache-level">L2: Fast access</div>
+                <div class="cache-level">L3: Shared cache</div>
+                <div style="font-size: 0.8em; margin-top: 8px; color: #ffd93d;">Access time: 100 cycles</div>
+            `;
+
+            await sleep(500);
+
+            // Now to register
+            const packetMiss2 = createPacket('10', cacheRect.left + 100, cacheRect.top + 90, regRect.left + 90, regRect.top + 100);
+            document.getElementById('main-area').appendChild(packetMiss2);
+
+            await sleep(1500);
+
+            cache.classList.remove('active');
+            memory.classList.remove('active');
+            instruction2.remove();
+
+            // Summary
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level">L1: a=5, c=10</div>
+                <div class="cache-level">L2: Fast access</div>
+                <div class="cache-level">L3: Shared cache</div>
+                <div style="font-size: 0.75em; margin-top: 5px;">Hit Rate: 92%</div>
+            `;
+        }
+
+        async function step4_useAdder() {
+            updateCaption("The machine code instruction ADD tells the ALU to send values from registers into an adder circuit. The adder combines them and writes the result back into another register.");
+
+            // Show instruction
+            const instruction = document.createElement('div');
+            instruction.className = 'instruction-highlight fade-in';
+            instruction.textContent = 'ADD R3, R1, R2';
+            document.getElementById('cpu-chip').appendChild(instruction);
+
+            await sleep(1000);
+
+            const aluBox = document.querySelector('.alu-box');
+            const adder = aluBox.querySelector('.adder');
+            aluBox.classList.add('active');
+            adder.classList.add('active');
+
+            await sleep(500);
+
+            // Show binary in adder
+            adder.innerHTML = `
+                <div class="component-title">Adder</div>
+                <div class="binary-display">R1: 00000101</div>
+                <div class="binary-display">R2: 00000111</div>
+                <div class="binary-display" style="color: #ffd93d;">= 00001100</div>
+            `;
+
+            await sleep(1500);
+
+            // Animate result to R3
+            const adderRect = adder.getBoundingClientRect();
+            const regRect = document.querySelector('.registers').getBoundingClientRect();
+            const packet = createPacket('12', adderRect.left + 75, adderRect.top + 50, regRect.left + 90, regRect.top + 140);
+            document.getElementById('main-area').appendChild(packet);
+
+            await sleep(1000);
+
+            // Update R3
+            const registers = document.querySelector('.registers');
+            registers.innerHTML = `
+                <div class="component-title">Registers (SRAM)</div>
+                <div class="register-slot">R1: 5</div>
+                <div class="register-slot">R2: 7</div>
+                <div class="register-slot" style="border-color: #ffd93d;">R3: <span style="color: #ffd93d;">12</span></div>
+            `;
+
+            aluBox.classList.remove('active');
+            adder.classList.remove('active');
+            instruction.remove();
+        }
+
+        async function step5_useShifter() {
+            updateCaption("A shift register moves bits left or right. Shifting left by 1 multiplies the number by 2. The hardware doesn't think 'multiply', it just shifts bits!");
+
+            // Show instruction
+            const instruction = document.createElement('div');
+            instruction.className = 'instruction-highlight fade-in';
+            instruction.textContent = 'SHL R3, 1   ; shift left by 1';
+            document.getElementById('cpu-chip').appendChild(instruction);
+
+            await sleep(1000);
+
+            const aluBox = document.querySelector('.alu-box');
+            const shifter = aluBox.querySelector('.shifter');
+            aluBox.classList.add('active');
+            shifter.classList.add('active');
+
+            await sleep(500);
+
+            // Show binary shifting
+            shifter.innerHTML = `
+                <div class="component-title">Shifter</div>
+                <div class="binary-display">00001100 →</div>
+                <div class="binary-display" style="color: #ffd93d;">00011000</div>
+                <div style="font-size: 0.8em; margin-top: 5px;">12 × 2 = 24</div>
+            `;
+
+            await sleep(1500);
+
+            // Update R3
+            const registers = document.querySelector('.registers');
+            registers.innerHTML = `
+                <div class="component-title">Registers (SRAM)</div>
+                <div class="register-slot">R1: 5</div>
+                <div class="register-slot">R2: 7</div>
+                <div class="register-slot" style="border-color: #ffd93d;">R3: <span style="color: #ffd93d;">24</span></div>
+            `;
+
+            aluBox.classList.remove('active');
+            shifter.classList.remove('active');
+            instruction.remove();
+        }
+
+        async function step6_counterLoop() {
+            updateCaption("A counter inside the CPU tracks repeated steps. Each time the loop runs, the counter increments. When it reaches the limit, the Control Unit stops the loop.");
+
+            const counter = document.querySelector('.counter');
+            const controlUnit = document.querySelector('.control-unit');
+            
+            // Show loop bubble
+            const bubble = document.createElement('div');
+            bubble.className = 'loop-bubble fade-in';
+            bubble.style.left = '200px';
+            bubble.style.top = '100px';
+            bubble.style.width = '600px';
+            bubble.style.height = '350px';
+            document.getElementById('cpu-chip').appendChild(bubble);
+
+            await sleep(1000);
+
+            // Loop 4 times
+            for (let i = 0; i < 4; i++) {
+                counter.classList.add('active');
+                controlUnit.classList.add('active');
+                
+                counter.innerHTML = `
+                    <div class="component-title">Counter</div>
+                    <div class="component-value">i = ${i}</div>
+                    <div style="font-size: 0.8em; margin-top: 5px;">Iteration ${i + 1}/4</div>
+                `;
+
+                await sleep(800);
+                
+                counter.classList.remove('active');
+                controlUnit.classList.remove('active');
+                await sleep(200);
+            }
+
+            // Show loop end
+            counter.innerHTML = `
+                <div class="component-title">Counter</div>
+                <div class="component-value">i = 4</div>
+                <div style="font-size: 0.8em; margin-top: 5px; color: #f5576c;">Loop complete!</div>
+            `;
+
+            bubble.remove();
+        }
+
+        async function step7_microcode() {
+            updateCaption("Some instructions are too complex to be a single hardware action. Microcode is a built-in mini-program inside the CPU that chains simple operations — add, shift, count — to implement complex instructions like multiply.");
+
+            const instruction = document.createElement('div');
+            instruction.className = 'instruction-highlight fade-in';
+            instruction.textContent = 'MUL R4, R1, R2   ; multiply';
+            document.getElementById('cpu-chip').appendChild(instruction);
+
+            await sleep(1000);
+
+            const microcode = document.querySelector('.microcode');
+            microcode.classList.add('active');
+
+            // Show microcode steps
+            const steps = [
+                'uStep1: Clear R4',
+                'uStep2: If R2[0]==1, ADD R4,R1',
+                'uStep3: Shift R1 left',
+                'uStep4: Shift R2 right',
+                'uStep5: Repeat until R2==0'
+            ];
+
+            microcode.innerHTML = `
+                <div class="component-title">Microcode ROM</div>
+                ${steps.map(s => `<div class="micro-step">${s}</div>`).join('')}
+            `;
+
+            await sleep(500);
+
+            // Execute each microstep
+            const microSteps = microcode.querySelectorAll('.micro-step');
+            for (let i = 0; i < microSteps.length; i++) {
+                microSteps[i].classList.add('active');
+                
+                // Highlight relevant hardware
+                if (i === 1) document.querySelector('.adder').classList.add('active');
+                if (i === 2 || i === 3) document.querySelector('.shifter').classList.add('active');
+                
+                await sleep(800);
+                
+                document.querySelector('.adder').classList.remove('active');
+                document.querySelector('.shifter').classList.remove('active');
+                microSteps[i].classList.remove('active');
+            }
+
+            microcode.classList.remove('active');
+            instruction.remove();
+        }
+
+        async function step8_interrupt() {
+            updateCaption("When devices like the keyboard need attention, they send interrupts. An encoder turns the interrupt signal into a binary code. A decoder selects the correct interrupt handler so the CPU can respond — then resumes its main task.");
+
+            // Show keyboard
+            const keyboard = document.createElement('div');
+            keyboard.className = 'device-icon fade-in';
+            keyboard.textContent = '⌨️';
+            document.getElementById('cpu-chip').appendChild(keyboard);
+
+            await sleep(1000);
+
+            // Keyboard flashes
+            keyboard.style.borderColor = '#ffd93d';
+            keyboard.style.boxShadow = '0 0 30px #ffd93d';
+
+            await sleep(500);
+
+            // Signal to encoder
+            const encoderDecoder = document.querySelector('.encoder-decoder');
+            encoderDecoder.classList.add('active');
+            
+            const keyRect = keyboard.getBoundingClientRect();
+            const encRect = encoderDecoder.getBoundingClientRect();
+            const packet = createPacket('⌨️', keyRect.left + 60, keyRect.top + 60, encRect.left + 90, encRect.top + 50);
+            document.getElementById('main-area').appendChild(packet);
+
+            await sleep(1000);
+
+            encoderDecoder.innerHTML = `
+                <div class="component-title">Encoder/Decoder</div>
+                <div class="component-value">Code: 001</div>
+                <div style="font-size: 0.8em; margin-top: 5px;">Keyboard Interrupt</div>
+            `;
+
+            await sleep(1000);
+
+            // To control unit
+            const controlUnit = document.querySelector('.control-unit');
+            controlUnit.classList.add('active');
+            controlUnit.innerHTML = `
+                <div class="component-title">Control Unit</div>
+                <div style="font-size: 0.85em; margin-top: 5px;">Handling interrupt...<br>Then resume</div>
+            `;
+
+            await sleep(1500);
+
+            encoderDecoder.classList.remove('active');
+            controlUnit.classList.remove('active');
+            keyboard.remove();
+        }
+
+        async function step9_machineCodeDriving() {
+            updateCaption("Each machine instruction is just a small command: load this, add that, shift here, compare there. Together, they drive all the tiny components — registers, adders, shifters, counters, and control logic.");
+
+            const instructions = [
+                { code: 'LOAD R1, a', component: 'registers' },
+                { code: 'ADD R3, R1, R2', component: 'alu-box' },
+                { code: 'SHL R3, 1', component: 'alu-box' },
+                { code: 'JNZ loop', component: 'counter' },
+                { code: 'INT 0x21', component: 'encoder-decoder' }
+            ];
+
+            for (const inst of instructions) {
+                const instruction = document.createElement('div');
+                instruction.className = 'instruction-highlight fade-in';
+                instruction.textContent = inst.code;
+                document.getElementById('cpu-chip').appendChild(instruction);
+
+                const component = document.querySelector(`.${inst.component}`);
+                component.classList.add('active');
+
+                await sleep(1200);
+
+                component.classList.remove('active');
+                instruction.remove();
+                await sleep(200);
+            }
+        }
+
+        async function step10_finalResult() {
+            updateCaption("After all the internal work, the CPU writes the result back through cache to memory, then to output device. To you it's just '24' on the screen — but inside, it was a carefully choreographed dance of bits through registers, cache, adders, shifters, counters, and control circuits.");
+
+            const registers = document.querySelector('.registers');
+            const cache = document.querySelector('.cache');
+            registers.classList.add('active');
+            registers.innerHTML = `
+                <div class="component-title">Registers (SRAM)</div>
+                <div class="register-slot">R1: 5</div>
+                <div class="register-slot">R2: 7</div>
+                <div class="register-slot" style="border-color: #ffd93d; box-shadow: 0 0 20px rgba(255,217,61,0.5);">
+                    R3: <span style="color: #ffd93d; font-size: 1.3em;">24</span>
+                </div>
+            `;
+
+            await sleep(1000);
+
+            // First to cache
+            cache.classList.add('active');
+            const regRect = registers.getBoundingClientRect();
+            const cacheRect = cache.getBoundingClientRect();
+            const packet0 = createPacket('24', regRect.left + 90, regRect.top + 140, cacheRect.left + 100, cacheRect.top + 90);
+            document.getElementById('main-area').appendChild(packet0);
+
+            await sleep(1000);
+
+            cache.innerHTML = `
+                <div class="component-title">Cache Memory</div>
+                <div class="cache-level" style="border-color: #ffd93d;">L1: result=24 ✓</div>
+                <div class="cache-level">L2: Write-through</div>
+                <div class="cache-level">L3: Shared cache</div>
+            `;
+
+            await sleep(800);
+
+            // Then to memory
+            const memory = document.querySelector('.memory-box');
+            const memRect = memory.getBoundingClientRect();
+            const packet1 = createPacket('24', cacheRect.left + 100, cacheRect.top + 90, memRect.left + 150, memRect.top + 50);
+            document.getElementById('main-area').appendChild(packet1);
+
+            await sleep(1000);
+
+            memory.classList.add('active');
+            memory.innerHTML = `
+                <div class="component-title">Main Memory (DRAM)</div>
+                <div style="font-size: 0.9em; margin-top: 10px;">result = <span style="color: #ffd93d; font-size: 1.3em;">24</span></div>
+            `;
+
+            await sleep(1000);
+
+            // To screen
+            const screen = document.createElement('div');
+            screen.className = 'screen-icon fade-in';
+            screen.innerHTML = `
+                <div>💻 Screen</div>
+                <div style="color: #43e97b; margin-top: 10px;">Result: 24</div>
+            `;
+            document.getElementById('cpu-chip').appendChild(screen);
+
+            const screenRect = screen.getBoundingClientRect();
+            const packet2 = createPacket('24', memRect.left + 150, memRect.top + 50, screenRect.left + 90, screenRect.top + 70);
+            document.getElementById('main-area').appendChild(packet2);
+
+            await sleep(1500);
+
+            registers.classList.remove('active');
+            cache.classList.remove('active');
+            memory.classList.remove('active');
+        }
+
+        function createPacket(text, fromX, fromY, toX, toY) {
+            const packet = document.createElement('div');
+            packet.className = 'data-packet';
+            packet.textContent = text;
+            packet.style.left = fromX + 'px';
+            packet.style.top = fromY + 'px';
+            
+            // Animate to destination
+            setTimeout(() => {
+                packet.style.transition = 'all 1s ease-in-out';
+                packet.style.opacity = '1';
+                packet.style.left = toX + 'px';
+                packet.style.top = toY + 'px';
+            }, 50);
+
+            setTimeout(() => {
+                packet.style.opacity = '0';
+                setTimeout(() => packet.remove(), 500);
+            }, 1200);
+
+            return packet;
+        }
+    </script>
+</body>
+</html>

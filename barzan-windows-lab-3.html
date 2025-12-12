@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barzan University - Windows Command Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0e14; --bg2: #0f1419; --bg3: #151c25; --card: #111822;
+            --green: #9fef00; --cyan: #00e5ff; --red: #ff5555; --orange: #ffb86c;
+            --text: #b3c3d3; --bright: #e2e8f0; --muted: #4a5568; --border: #1e293b;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'JetBrains Mono', monospace; background: var(--bg); color: var(--text); min-height: 100vh; overflow: hidden; }
+        
+        .app { display: grid; grid-template-columns: 300px 1fr 320px; grid-template-rows: 56px 1fr; height: 100vh; }
+        
+        .header { grid-column: 1 / -1; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--green), var(--cyan)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--bg); font-size: 14px; }
+        .logo-text h1 { font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--green); letter-spacing: 3px; }
+        .logo-text span { font-size: 9px; color: var(--muted); }
+        
+        .stats { display: flex; gap: 10px; align-items: center; }
+        .stat { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; font-size: 11px; }
+        .stat-val { color: var(--green); font-weight: 600; font-size: 14px; }
+        .rank-badge { background: linear-gradient(135deg, var(--green), var(--cyan)); color: var(--bg); padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 10px; }
+
+        .sidebar { background: var(--bg2); border-right: 1px solid var(--border); overflow-y: auto; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .sidebar-header { padding: 15px; border-bottom: 1px solid var(--border); }
+        .progress-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+        .progress-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 12px; }
+        .progress-stats { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 8px; }
+        .progress-bar { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); width: 0%; transition: width 0.5s ease; }
+        
+        .nav-section { padding: 10px; }
+        .nav-chapter { margin-bottom: 15px; }
+        .nav-chapter-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: var(--bg3); border-radius: 6px; margin-bottom: 5px; }
+        .nav-chapter-title { font-size: 10px; color: var(--cyan); text-transform: uppercase; letter-spacing: 1px; }
+        .nav-chapter-status { font-size: 9px; padding: 2px 6px; border-radius: 3px; }
+        .nav-chapter-status.locked { background: rgba(255,85,85,0.2); color: var(--red); }
+        .nav-chapter-status.unlocked { background: rgba(159,239,0,0.2); color: var(--green); }
+        .nav-chapter-status.complete { background: rgba(0,229,255,0.2); color: var(--cyan); }
+        .nav-item { padding: 8px 12px; font-size: 11px; color: var(--text); cursor: pointer; border-radius: 4px; margin: 2px 0; border-left: 3px solid transparent; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .nav-item:hover:not(.locked) { background: var(--bg3); border-left-color: var(--green); }
+        .nav-item.active { background: rgba(159, 239, 0, 0.15); border-left-color: var(--green); color: var(--green); }
+        .nav-item.completed { color: var(--cyan); border-left-color: var(--cyan); }
+        .nav-item.locked { opacity: 0.4; cursor: not-allowed; }
+        .nav-item .icon { font-size: 14px; }
+        .nav-item .title { flex: 1; }
+        .nav-item .badge { font-size: 9px; padding: 2px 6px; border-radius: 3px; background: rgba(159,239,0,0.15); color: var(--green); }
+        .nav-item .check { color: var(--cyan); font-weight: bold; }
+        .nav-item .lock { color: var(--red); }
+
+        .main { display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+        .content-header { padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--bg2); }
+        .content-title { font-size: 16px; font-weight: 600; color: var(--bright); margin-bottom: 3px; }
+        .content-subtitle { font-size: 11px; color: var(--muted); }
+        
+        .mode-tabs { display: flex; gap: 5px; padding: 8px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+        .mode-tab { padding: 6px 14px; font-size: 11px; color: var(--muted); background: transparent; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+        .mode-tab:hover { border-color: var(--green); color: var(--text); }
+        .mode-tab.active { background: rgba(159, 239, 0, 0.1); border-color: var(--green); color: var(--green); }
+        .btn { padding: 6px 12px; font-size: 10px; border: 1px solid var(--border); background: var(--bg3); color: var(--text); border-radius: 4px; cursor: pointer; font-family: inherit; }
+        .btn:hover { border-color: var(--green); color: var(--green); }
+
+        .content-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        
+        .tutorial-panel { flex: 1; overflow-y: auto; padding: 15px; }
+        .tutorial-panel::-webkit-scrollbar { width: 6px; }
+        .tutorial-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .tutorial-panel.hidden { display: none; }
+        .tutorial-section { background: var(--card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 15px; }
+        .tutorial-section-header { background: var(--bg3); padding: 10px 14px; border-bottom: 1px solid var(--border); }
+        .tutorial-section-title { font-size: 12px; font-weight: 600; color: var(--bright); }
+        .tutorial-section-body { padding: 14px; line-height: 1.6; font-size: 11px; }
+        .cmd-block { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin: 10px 0; }
+        .cmd-syntax { font-size: 13px; color: var(--bright); padding: 8px; background: var(--bg2); border-radius: 4px; margin-bottom: 6px; }
+        .cmd-name { color: var(--green); font-weight: 600; }
+        .cmd-option { color: var(--orange); }
+        .cmd-desc { font-size: 10px; color: var(--text); }
+        .options-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+        .options-table th { background: var(--bg3); color: var(--cyan); padding: 6px 10px; text-align: left; }
+        .options-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+        .note { background: rgba(159, 239, 0, 0.1); border-left: 3px solid var(--green); padding: 8px 10px; margin: 10px 0; font-size: 10px; }
+        .warning { background: rgba(255, 85, 85, 0.1); border-left: 3px solid var(--red); padding: 8px 10px; margin: 10px 0; font-size: 10px; }
+        code { background: var(--bg3); padding: 2px 5px; border-radius: 3px; color: var(--orange); font-size: 10px; }
+
+        .exercise-panel { flex: 1; display: none; flex-direction: column; }
+        .exercise-panel.active { display: flex; }
+        .exercise-info { padding: 15px; background: var(--bg2); border-bottom: 1px solid var(--border); }
+        .exercise-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .exercise-points { font-size: 18px; color: var(--green); font-weight: 700; }
+        .exercise-desc { font-size: 11px; color: var(--text); margin-bottom: 12px; padding: 10px; background: var(--bg3); border-radius: 6px; }
+        .objectives-title { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .objectives { list-style: none; }
+        .obj { display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-size: 11px; background: var(--bg); margin: 4px 0; border-radius: 6px; border: 1px solid var(--border); transition: all 0.3s; }
+        .obj.done { border-color: var(--green); background: rgba(159, 239, 0, 0.08); }
+        .obj-check { width: 22px; height: 22px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; transition: all 0.3s; }
+        .obj-check.done { background: var(--green); border-color: var(--green); color: var(--bg); }
+        .obj-text { flex: 1; }
+        .obj-text.done { color: var(--green); }
+
+        .terminal { flex: 1; background: var(--bg); display: flex; flex-direction: column; border: 1px solid var(--border); margin: 10px; border-radius: 8px; overflow: hidden; min-height: 200px; }
+        .term-header { background: var(--bg3); padding: 8px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+        .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .term-dot.red { background: #ff5f56; }
+        .term-dot.yellow { background: #ffbd2e; }
+        .term-dot.green { background: #27ca40; }
+        .term-title { font-size: 11px; color: var(--muted); margin-left: 10px; }
+        .term-output { flex: 1; overflow-y: auto; padding: 12px; font-size: 12px; line-height: 1.6; }
+        .term-output::-webkit-scrollbar { width: 6px; }
+        .term-output::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .line { margin: 3px 0; white-space: pre-wrap; word-break: break-all; }
+        .line .prompt { color: var(--green); }
+        .line .cmd { color: var(--bright); }
+        .line.result { color: var(--text); }
+        .line.success { color: var(--green); font-weight: 600; }
+        .line.sys { color: var(--cyan); }
+        .line.error { color: var(--red); }
+        .term-input-row { display: flex; align-items: center; padding: 10px 12px; background: var(--bg2); border-top: 1px solid var(--border); }
+        .term-prompt { color: var(--green); font-size: 12px; margin-right: 8px; }
+        .term-input { flex: 1; background: transparent; border: none; color: var(--bright); font-family: inherit; font-size: 12px; outline: none; }
+
+        .right-panel { background: var(--bg2); border-left: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+        .panel-section { border-bottom: 1px solid var(--border); }
+        .panel-header { padding: 10px 12px; background: var(--bg3); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 2px; }
+        .panel-content { padding: 10px; max-height: 200px; overflow-y: auto; }
+        .files-path { font-size: 10px; color: var(--cyan); padding: 6px 8px; background: var(--bg); border-radius: 4px; margin-bottom: 8px; }
+        .file-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; font-size: 11px; cursor: pointer; border-radius: 4px; }
+        .file-item:hover { background: var(--bg3); }
+        .quick-ref { flex: 1; overflow-y: auto; }
+        .ref-section { padding: 10px; border-bottom: 1px solid var(--border); }
+        .ref-title { font-size: 9px; color: var(--cyan); margin-bottom: 8px; text-transform: uppercase; }
+        .ref-cmd { display: flex; justify-content: space-between; padding: 4px 0; font-size: 10px; }
+        .ref-cmd-name { color: var(--green); }
+        .ref-cmd-desc { color: var(--muted); }
+
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">BU</div>
+                <div class="logo-text">
+                    <h1>BARZAN UNIVERSITY</h1>
+                    <span>Windows Command Lab • ICT60001</span>
+                </div>
+            </div>
+            <div class="stats">
+                <div class="stat"><span>⚡</span><span class="stat-val" id="pts">0</span><span>pts</span></div>
+                <div class="stat"><span>✓</span><span class="stat-val" id="completed">0/20</span></div>
+                <div class="rank-badge" id="rank">BEGINNER</div>
+            </div>
+        </header>
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="progress-label">Course Progress</div>
+                <div class="progress-box">
+                    <div class="progress-stats">
+                        <span id="progText">0 / 20</span>
+                        <span id="progPct">0%</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+                </div>
+            </div>
+            <nav class="nav-section" id="navSection"></nav>
+        </aside>
+        
+        <main class="main">
+            <div class="content-header">
+                <div class="content-title" id="contentTitle">Welcome</div>
+                <div class="content-subtitle" id="contentSubtitle">Select a tutorial or exercise</div>
+            </div>
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="tutorial" onclick="setMode('tutorial')">📖 Tutorial</button>
+                <button class="mode-tab" data-mode="exercise" onclick="setMode('exercise')">⚡ Exercise</button>
+                <button class="btn" onclick="resetExercise()" style="margin-left:auto;">↻ Reset</button>
+            </div>
+            <div class="content-body">
+                <div class="tutorial-panel" id="tutorialPanel"></div>
+                <div class="exercise-panel" id="exercisePanel">
+                    <div class="exercise-info" id="exerciseInfo"></div>
+                    <div class="terminal">
+                        <div class="term-header">
+                            <div class="term-dot red"></div>
+                            <div class="term-dot yellow"></div>
+                            <div class="term-dot green"></div>
+                            <span class="term-title">Command Prompt - Windows 10</span>
+                        </div>
+                        <div class="term-output" id="output"></div>
+                        <div class="term-input-row">
+                            <span class="term-prompt" id="promptText">C:\Users\Student></span>
+                            <input type="text" class="term-input" id="cmdInput" placeholder="Type command here..." autofocus>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <aside class="right-panel">
+            <div class="panel-section">
+                <div class="panel-header">📁 Current Directory</div>
+                <div class="panel-content">
+                    <div class="files-path" id="filesPath">C:\Users\Student</div>
+                    <div id="filesList"></div>
+                </div>
+            </div>
+            <div class="panel-section quick-ref">
+                <div class="panel-header">📋 Quick Reference</div>
+                <div class="panel-content" id="quickRef"></div>
+            </div>
+        </aside>
+    </div>
+
+
+<script>
+// ============================================
+// CHAPTERS - Define the order
+// ============================================
+const CHAPTERS = [
+    { id: 'ch1', name: 'Ch1: Navigation', order: 1 },
+    { id: 'ch2', name: 'Ch2: Files', order: 2 },
+    { id: 'ch3', name: 'Ch3: Variables', order: 3 },
+    { id: 'ch4', name: 'Ch4: Pipes', order: 4 },
+    { id: 'ch5', name: 'Ch5: Network', order: 5 },
+    { id: 'ch6', name: 'Ch6: System', order: 6 },
+    { id: 'ch7', name: 'Ch7: Batch', order: 7 }
+];
+
+// ============================================
+// TUTORIALS
+// ============================================
+const TUTORIALS = {
+'tut-nav': { title: 'Navigation Basics', chapter: 'Ch1: Navigation', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📂 Understanding the Command Prompt</span></div><div class="tutorial-section-body">
+<p>The Windows Command Prompt is a text-based interface for interacting with your computer. Instead of clicking icons, you type commands to navigate folders, manage files, and run programs.</p>
+<p>The <strong>prompt</strong> shows your current location: <code>C:\\Users\\Student></code> means you're in the Student folder.</p>
+<div class="note">💡 Commands are not case-sensitive: <code>DIR</code>, <code>dir</code>, and <code>Dir</code> all work the same!</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📁 DIR - Listing Directory Contents</span></div><div class="tutorial-section-body">
+<p>The <code>DIR</code> command shows you what files and folders exist in your current location - like opening a folder in File Explorer.</p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">DIR</span></div><div class="cmd-desc">List all files and folders in the current directory</div></div>
+<p>You can add options to change how results are displayed:</p>
+<table class="options-table"><tr><th>Option</th><th>What it does</th><th>Example</th></tr>
+<tr><td>/B</td><td>Bare format - shows only names, no details</td><td><code>DIR /B</code></td></tr>
+<tr><td>/S</td><td>Include all subdirectories recursively</td><td><code>DIR /S</code></td></tr>
+<tr><td>/AH</td><td>Show only hidden files</td><td><code>DIR /AH</code></td></tr>
+<tr><td>/W</td><td>Wide list format (multiple columns)</td><td><code>DIR /W</code></td></tr></table>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📍 CD - Changing Directories</span></div><div class="tutorial-section-body">
+<p>The <code>CD</code> (Change Directory) command lets you move between folders, like double-clicking folders in File Explorer.</p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">CD</span> foldername</div><div class="cmd-desc">Move into a folder</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">CD</span> ..</div><div class="cmd-desc">Go back to parent folder (one level up)</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">CD</span></div><div class="cmd-desc">Display your current directory path</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">CD</span> \\</div><div class="cmd-desc">Go to the root of the current drive</div></div>
+<div class="note">💡 Use <code>CD ..</code> with two dots to go up. A single dot <code>.</code> means "current folder".</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🖥️ CLS & ECHO - Screen Control</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">CLS</span></div><div class="cmd-desc">Clear the screen - useful when it gets cluttered</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">ECHO</span> message</div><div class="cmd-desc">Display a message on screen</div></div>
+<p>ECHO is commonly used in batch scripts to show status messages or instructions to users.</p>
+</div></div>` },
+
+'tut-files': { title: 'File Operations', chapter: 'Ch2: Files', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📄 Working with Files</span></div><div class="tutorial-section-body">
+<p>The Command Prompt gives you powerful tools to view, copy, move, rename, and delete files - often faster than using the mouse!</p>
+<div class="warning">⚠️ Be careful with DEL and RD commands - they don't go to the Recycle Bin. Deleted files are gone permanently!</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">👁️ TYPE - Viewing File Contents</span></div><div class="tutorial-section-body">
+<p>The <code>TYPE</code> command displays the contents of a text file directly in the terminal.</p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">TYPE</span> filename.txt</div><div class="cmd-desc">Display the contents of a file</div></div>
+<p>This works best with text files (.txt, .csv, .bat, .log). Binary files will show garbled characters.</p>
+<div class="note">💡 For long files, combine with MORE: <code>TYPE file.txt | MORE</code> to view one page at a time.</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📋 COPY - Copying Files</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">COPY</span> source destination</div><div class="cmd-desc">Create a copy of a file</div></div>
+<p><strong>Examples:</strong></p>
+<p><code>COPY report.txt backup.txt</code> - Copy to same folder with new name</p>
+<p><code>COPY report.txt D:\\Backup\\</code> - Copy to different location</p>
+<p><code>COPY *.txt D:\\TextFiles\\</code> - Copy all .txt files using wildcard</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">✏️ REN - Renaming Files</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">REN</span> oldname newname</div><div class="cmd-desc">Rename a file or folder</div></div>
+<p><code>REN report.txt final_report.txt</code></p>
+<div class="note">💡 REN can also rename multiple files using wildcards: <code>REN *.txt *.bak</code></div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🗑️ DEL - Deleting Files</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">DEL</span> filename</div><div class="cmd-desc">Permanently delete a file</div></div>
+<p><code>DEL temp.txt</code> - Delete a single file</p>
+<p><code>DEL *.tmp</code> - Delete all .tmp files</p>
+<div class="warning">⚠️ Files deleted with DEL skip the Recycle Bin and cannot be recovered!</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📁 MD & RD - Managing Folders</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">MD</span> foldername</div><div class="cmd-desc">Make Directory - create a new folder</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">RD</span> foldername</div><div class="cmd-desc">Remove Directory - delete an empty folder</div></div>
+<p>To delete a folder with contents, use: <code>RD /S foldername</code></p>
+</div></div>` },
+
+'tut-vars': { title: 'Environment Variables', chapter: 'Ch3: Variables', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔧 What are Environment Variables?</span></div><div class="tutorial-section-body">
+<p>Environment variables are named values that store information about your system and user preferences. They're like containers that hold useful data you can access anytime.</p>
+<p>Windows comes with many built-in variables, and you can create your own!</p>
+<p>To use a variable, wrap its name in percent signs: <code>%VARIABLENAME%</code></p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📊 Common System Variables</span></div><div class="tutorial-section-body">
+<table class="options-table"><tr><th>Variable</th><th>Contains</th><th>Example Value</th></tr>
+<tr><td>%USERNAME%</td><td>Current logged-in user</td><td>Student</td></tr>
+<tr><td>%COMPUTERNAME%</td><td>Name of this computer</td><td>DESKTOP-ABC123</td></tr>
+<tr><td>%DATE%</td><td>Current date</td><td>12/09/2025</td></tr>
+<tr><td>%TIME%</td><td>Current time</td><td>14:30:25.12</td></tr>
+<tr><td>%CD%</td><td>Current directory path</td><td>C:\\Users\\Student</td></tr>
+<tr><td>%USERPROFILE%</td><td>User's home folder</td><td>C:\\Users\\Student</td></tr>
+<tr><td>%RANDOM%</td><td>Random number (0-32767)</td><td>12847</td></tr></table>
+<p>Try it: <code>ECHO Hello, %USERNAME%! Today is %DATE%</code></p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">✨ Creating Your Own Variables</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">SET</span> name=value</div><div class="cmd-desc">Create or modify a variable</div></div>
+<p><strong>Examples:</strong></p>
+<p><code>SET greeting=Hello World</code></p>
+<p><code>ECHO %greeting%</code> → displays "Hello World"</p>
+<div class="warning">⚠️ Important: NO SPACES around the equals sign!<br><code>SET x=5</code> ✓ correct<br><code>SET x = 5</code> ✗ wrong (creates variable "x " with value " 5")</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔢 Math with SET /A</span></div><div class="tutorial-section-body">
+<p>Use <code>SET /A</code> to perform calculations:</p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">SET /A</span> result=expression</div><div class="cmd-desc">Calculate and store the result</div></div>
+<p><strong>Supported operators:</strong> + - * / % (modulo)</p>
+<p><code>SET /A sum=10+5</code> → sum = 15</p>
+<p><code>SET /A product=6*7</code> → product = 42</p>
+<p><code>SET /A half=100/2</code> → half = 50</p>
+</div></div>` },
+
+'tut-pipes': { title: 'Pipes & Redirection', chapter: 'Ch4: Pipes', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">➡️ What is Redirection?</span></div><div class="tutorial-section-body">
+<p>By default, commands display their output on screen. <strong>Redirection</strong> lets you send that output somewhere else - like saving it to a file!</p>
+<p>This is incredibly useful for creating logs, saving reports, or processing data.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📝 Output Redirection</span></div><div class="tutorial-section-body">
+<table class="options-table"><tr><th>Operator</th><th>Action</th><th>Example</th></tr>
+<tr><td>></td><td>Write to file (overwrites existing content)</td><td><code>DIR > filelist.txt</code></td></tr>
+<tr><td>>></td><td>Append to file (adds to end)</td><td><code>ECHO Done >> log.txt</code></td></tr></table>
+<p><strong>Examples:</strong></p>
+<p><code>DIR > files.txt</code> - Save directory listing to files.txt</p>
+<p><code>ECHO Started at %TIME% >> log.txt</code> - Add timestamp to log</p>
+<p><code>SYSTEMINFO > report.txt</code> - Save system info to file</p>
+<div class="note">💡 Use <code>></code> to create/overwrite, use <code>>></code> to add to existing file</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔗 Pipes - Connecting Commands</span></div><div class="tutorial-section-body">
+<p>The <strong>pipe</strong> operator <code>|</code> sends the output of one command as input to another command.</p>
+<div class="cmd-block"><div class="cmd-syntax">command1 <span class="cmd-option">|</span> command2</div><div class="cmd-desc">Send output of command1 to command2</div></div>
+<p><strong>Useful examples:</strong></p>
+<p><code>DIR | MORE</code> - View directory listing one page at a time</p>
+<p><code>TYPE longfile.txt | MORE</code> - Read long file with pagination</p>
+<p><code>TASKLIST | FIND "chrome"</code> - Find specific process</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">⛓️ Command Chaining</span></div><div class="tutorial-section-body">
+<table class="options-table"><tr><th>Operator</th><th>Behavior</th></tr>
+<tr><td>&</td><td>Run both commands regardless of success/failure</td></tr>
+<tr><td>&&</td><td>Run second command only if first succeeds</td></tr>
+<tr><td>||</td><td>Run second command only if first fails</td></tr></table>
+<p><code>MD Backup & COPY *.txt Backup</code> - Create folder then copy files</p>
+</div></div>` },
+
+'tut-net': { title: 'Network Commands', chapter: 'Ch5: Network', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🌐 Network Diagnostics</span></div><div class="tutorial-section-body">
+<p>Windows provides powerful command-line tools for troubleshooting network issues and viewing network configuration.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">💻 HOSTNAME - Computer Name</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">HOSTNAME</span></div><div class="cmd-desc">Display this computer's network name</div></div>
+<p>The hostname identifies your computer on the network. Other computers use this name to connect to you.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔌 IPCONFIG - IP Configuration</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">IPCONFIG</span></div><div class="cmd-desc">Display IP address and network settings</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">IPCONFIG /ALL</span></div><div class="cmd-desc">Show detailed network information</div></div>
+<p>This shows your:</p>
+<p>• <strong>IPv4 Address</strong> - Your computer's address on the network (e.g., 192.168.1.100)</p>
+<p>• <strong>Subnet Mask</strong> - Defines your network's size</p>
+<p>• <strong>Default Gateway</strong> - Your router's address</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📡 PING - Test Connectivity</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">PING</span> hostname</div><div class="cmd-desc">Send test packets to check if a host is reachable</div></div>
+<p><code>PING google.com</code> - Test internet connectivity</p>
+<p><code>PING 192.168.1.1</code> - Test connection to router</p>
+<p><code>PING localhost</code> - Test your own network stack</p>
+<div class="note">💡 If ping fails, there may be a network problem or firewall blocking the connection.</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📊 NETSTAT - Network Statistics</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">NETSTAT</span></div><div class="cmd-desc">Display active network connections</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">NETSTAT -an</span></div><div class="cmd-desc">Show all connections with numeric addresses</div></div>
+<p>This shows which programs are connected to the network and what ports they're using.</p>
+</div></div>` },
+
+'tut-sys': { title: 'System Commands', chapter: 'Ch6: System', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">💻 System Information Commands</span></div><div class="tutorial-section-body">
+<p>These commands help you understand your system and manage running programs.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">👤 WHOAMI - Current User</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">WHOAMI</span></div><div class="cmd-desc">Display the current logged-in user</div></div>
+<p>Shows the domain (or computer name) and username: <code>COMPUTERNAME\\Username</code></p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">WHOAMI /GROUPS</span></div><div class="cmd-desc">Show security groups the user belongs to</div></div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">ℹ️ SYSTEMINFO - System Details</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">SYSTEMINFO</span></div><div class="cmd-desc">Display detailed computer information</div></div>
+<p>This comprehensive command shows:</p>
+<p>• OS Name and Version</p>
+<p>• Computer Name and Domain</p>
+<p>• Total Physical Memory (RAM)</p>
+<p>• Network Card(s) Information</p>
+<p>• System Boot Time</p>
+<p>• Installed Hotfixes</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📋 TASKLIST - Running Processes</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">TASKLIST</span></div><div class="cmd-desc">List all running processes</div></div>
+<p>Similar to Task Manager, shows:</p>
+<p>• Image Name (program name)</p>
+<p>• PID (Process ID) - unique identifier</p>
+<p>• Memory Usage</p>
+<p><code>TASKLIST | FIND "chrome"</code> - Find specific process</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🛑 TASKKILL - End Processes</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">TASKKILL /PID</span> number</div><div class="cmd-desc">Kill a process by its ID</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">TASKKILL /IM</span> name.exe</div><div class="cmd-desc">Kill a process by name</div></div>
+<p><code>TASKKILL /PID 1234</code> - End process with ID 1234</p>
+<p><code>TASKKILL /IM notepad.exe</code> - End all Notepad instances</p>
+<div class="warning">⚠️ Use with caution! Killing system processes can cause instability.</div>
+</div></div>` },
+
+'tut-batch': { title: 'Batch Scripting', chapter: 'Ch7: Batch', content: `
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">📜 What are Batch Files?</span></div><div class="tutorial-section-body">
+<p>A <strong>batch file</strong> is a text file containing a series of commands that run automatically when you execute the file. They have the <code>.bat</code> extension.</p>
+<p>Batch files let you automate repetitive tasks - run multiple commands with a single click!</p>
+<div class="note">💡 Create batch files with any text editor (Notepad), save with .bat extension</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔇 @ECHO OFF - Clean Output</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">@ECHO OFF</span></div><div class="cmd-desc">Hide commands from displaying (put at start of script)</div></div>
+<p>Without this, every command is shown before it runs. <code>@ECHO OFF</code> makes output cleaner by only showing results.</p>
+<p>The <code>@</code> symbol hides that specific line from displaying.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">💬 REM & PAUSE - Script Control</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">REM</span> your comment here</div><div class="cmd-desc">Add a comment (ignored when running)</div></div>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">PAUSE</span></div><div class="cmd-desc">Wait for user to press any key</div></div>
+<p>Use REM to document what your script does. Use PAUSE to let users read output before the window closes.</p>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">❓ IF - Conditional Execution</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">IF</span> condition command</div><div class="cmd-desc">Run command only if condition is true</div></div>
+<p><strong>Examples:</strong></p>
+<p><code>IF EXIST file.txt ECHO File found!</code></p>
+<p><code>IF %count%==5 ECHO Count is five</code></p>
+<p><code>IF NOT EXIST backup MD backup</code></p>
+<div class="note">💡 Use <code>==</code> for comparison (not single <code>=</code>)</div>
+</div></div>
+
+<div class="tutorial-section"><div class="tutorial-section-header"><span class="tutorial-section-title">🔄 FOR - Loops</span></div><div class="tutorial-section-body">
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">FOR /L</span> %i IN (start,step,end) DO command</div><div class="cmd-desc">Loop through numbers</div></div>
+<p><code>FOR /L %i IN (1,1,5) DO ECHO %i</code> - Count from 1 to 5</p>
+<p><code>FOR /L %i IN (0,2,10) DO ECHO %i</code> - Count 0,2,4,6,8,10</p>
+<div class="cmd-block"><div class="cmd-syntax"><span class="cmd-name">FOR</span> %f IN (*.txt) DO command</div><div class="cmd-desc">Loop through files</div></div>
+<p><code>FOR %f IN (*.txt) DO TYPE %f</code> - Display all text files</p>
+<div class="warning">⚠️ In batch files, use %%i instead of %i (double percent signs)</div>
+</div></div>` }
+};
+
+// ============================================
+// EXERCISES - 50 exercises for comprehensive practice
+// ============================================
+const EXERCISES = [
+    // ========== Chapter 1: Navigation (8 exercises) ==========
+    { id: 'ex-dir1', title: 'Basic DIR', chapter: 'Ch1: Navigation', points: 30, desc: 'List directory contents.',
+      objectives: [
+        { text: 'List all files in the current directory', pattern: /^dir$/i }
+      ],
+      files: { 'readme.txt': {type:'file',content:'Hello!'}, 'notes.txt': {type:'file',content:'Notes'} }
+    },
+    { id: 'ex-dir2', title: 'DIR Options', chapter: 'Ch1: Navigation', points: 40, desc: 'Use DIR with different options.',
+      objectives: [
+        { text: 'List files in bare format (names only)', pattern: /^dir\s+\/b$/i },
+        { text: 'List files in wide format', pattern: /^dir\s+\/w$/i }
+      ],
+      files: { 'file1.txt': {type:'file',content:'1'}, 'file2.txt': {type:'file',content:'2'}, 'file3.txt': {type:'file',content:'3'} }
+    },
+    { id: 'ex-dir3', title: 'Hidden Files', chapter: 'Ch1: Navigation', points: 50, desc: 'Find hidden files with DIR.',
+      objectives: [
+        { text: 'Show only hidden files using DIR /AH', pattern: /^dir\s+\/ah$/i },
+        { text: 'List all files normally', pattern: /^dir$/i }
+      ],
+      files: { 'visible.txt': {type:'file',content:'You can see me'}, '.hidden': {type:'file',content:'Secret!',hidden:true}, '.config': {type:'file',content:'Settings',hidden:true} }
+    },
+    { id: 'ex-cd1', title: 'Show Path', chapter: 'Ch1: Navigation', points: 30, desc: 'Display current location.',
+      objectives: [
+        { text: 'Display your current directory path', pattern: /^cd$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-cd2', title: 'Navigate Folders', chapter: 'Ch1: Navigation', points: 50, desc: 'Move between directories.',
+      objectives: [
+        { text: 'Enter the Documents folder', pattern: /^cd\s+documents$/i },
+        { text: 'Go back to parent directory', pattern: /^cd\s+\.\.$/i }
+      ],
+      files: { 'Documents': {type:'folder',children:{'report.txt':{type:'file',content:'Report'}}} }
+    },
+    { id: 'ex-cd3', title: 'Deep Navigation', chapter: 'Ch1: Navigation', points: 60, desc: 'Navigate multiple folder levels.',
+      objectives: [
+        { text: 'Enter the Projects folder', pattern: /^cd\s+projects$/i },
+        { text: 'Enter the Work subfolder', pattern: /^cd\s+work$/i },
+        { text: 'Return to parent twice', pattern: /^cd\s+\.\.$/i }
+      ],
+      files: { 'Projects': {type:'folder',children:{'Work':{type:'folder',children:{'task.txt':{type:'file',content:'Task'}}}}} }
+    },
+    { id: 'ex-echo1', title: 'ECHO Messages', chapter: 'Ch1: Navigation', points: 30, desc: 'Display messages with ECHO.',
+      objectives: [
+        { text: 'Display "Hello World" on screen', pattern: /^echo\s+hello\s+world$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-cls1', title: 'Clear Screen', chapter: 'Ch1: Navigation', points: 30, desc: 'Clear the terminal.',
+      objectives: [
+        { text: 'Display any message', pattern: /^echo\s+.+$/i },
+        { text: 'Clear the terminal screen', pattern: /^cls$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 2: Files (10 exercises) ==========
+    { id: 'ex-type1', title: 'View File', chapter: 'Ch2: Files', points: 30, desc: 'View a single file.',
+      objectives: [
+        { text: 'View the contents of readme.txt', pattern: /^type\s+readme\.txt$/i }
+      ],
+      files: { 'readme.txt': {type:'file',content:'Welcome to Windows Command Lab!'} }
+    },
+    { id: 'ex-type2', title: 'View Multiple Files', chapter: 'Ch2: Files', points: 40, desc: 'View different files.',
+      objectives: [
+        { text: 'View the contents of data.csv', pattern: /^type\s+data\.csv$/i },
+        { text: 'View the contents of config.txt', pattern: /^type\s+config\.txt$/i }
+      ],
+      files: { 'data.csv': {type:'file',content:'Name,Age,City\nAlice,25,NYC\nBob,30,LA'}, 'config.txt': {type:'file',content:'setting=true\nmode=advanced'} }
+    },
+    { id: 'ex-copy1', title: 'Copy File', chapter: 'Ch2: Files', points: 40, desc: 'Make a copy of a file.',
+      objectives: [
+        { text: 'Copy report.txt to backup.txt', pattern: /^copy\s+report\.txt\s+backup\.txt$/i },
+        { text: 'Verify with DIR', pattern: /^dir$/i }
+      ],
+      files: { 'report.txt': {type:'file',content:'Quarterly Report Data'} }
+    },
+    { id: 'ex-copy2', title: 'Copy Practice', chapter: 'Ch2: Files', points: 50, desc: 'Practice copying files.',
+      objectives: [
+        { text: 'Copy document.txt to document_copy.txt', pattern: /^copy\s+document\.txt\s+document_copy\.txt$/i },
+        { text: 'Copy notes.txt to notes_backup.txt', pattern: /^copy\s+notes\.txt\s+notes_backup\.txt$/i }
+      ],
+      files: { 'document.txt': {type:'file',content:'Important document'}, 'notes.txt': {type:'file',content:'Meeting notes'} }
+    },
+    { id: 'ex-del1', title: 'Delete File', chapter: 'Ch2: Files', points: 40, desc: 'Delete unwanted files.',
+      objectives: [
+        { text: 'Delete temp.txt', pattern: /^del\s+temp\.txt$/i },
+        { text: 'Verify deletion with DIR', pattern: /^dir$/i }
+      ],
+      files: { 'temp.txt': {type:'file',content:'Temporary'}, 'important.txt': {type:'file',content:'Keep this!'} }
+    },
+    { id: 'ex-del2', title: 'Clean Up Files', chapter: 'Ch2: Files', points: 50, desc: 'Delete multiple files.',
+      objectives: [
+        { text: 'Delete junk1.txt', pattern: /^del\s+junk1\.txt$/i },
+        { text: 'Delete junk2.txt', pattern: /^del\s+junk2\.txt$/i },
+        { text: 'Verify only keeper.txt remains', pattern: /^dir$/i }
+      ],
+      files: { 'junk1.txt': {type:'file',content:'Delete me'}, 'junk2.txt': {type:'file',content:'Delete me too'}, 'keeper.txt': {type:'file',content:'Keep!'} }
+    },
+    { id: 'ex-ren1', title: 'Rename File', chapter: 'Ch2: Files', points: 40, desc: 'Rename a file.',
+      objectives: [
+        { text: 'Rename old.txt to new.txt', pattern: /^ren\s+old\.txt\s+new\.txt$/i },
+        { text: 'Verify the rename', pattern: /^dir$/i }
+      ],
+      files: { 'old.txt': {type:'file',content:'Rename me!'} }
+    },
+    { id: 'ex-ren2', title: 'Rename Practice', chapter: 'Ch2: Files', points: 50, desc: 'Practice renaming files.',
+      objectives: [
+        { text: 'Rename draft.txt to final.txt', pattern: /^ren\s+draft\.txt\s+final\.txt$/i },
+        { text: 'Rename temp.doc to report.doc', pattern: /^ren\s+temp\.doc\s+report\.doc$/i }
+      ],
+      files: { 'draft.txt': {type:'file',content:'Draft version'}, 'temp.doc': {type:'file',content:'Temp document'} }
+    },
+    { id: 'ex-md1', title: 'Create Folder', chapter: 'Ch2: Files', points: 40, desc: 'Create a new folder.',
+      objectives: [
+        { text: 'Create a folder called Backup', pattern: /^(md|mkdir)\s+backup$/i },
+        { text: 'Verify with DIR', pattern: /^dir$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-mdrd', title: 'Folders Practice', chapter: 'Ch2: Files', points: 60, desc: 'Create and remove folders.',
+      objectives: [
+        { text: 'Create a folder called TestFolder', pattern: /^(md|mkdir)\s+testfolder$/i },
+        { text: 'Verify it was created', pattern: /^dir$/i },
+        { text: 'Remove the TestFolder', pattern: /^(rd|rmdir)\s+testfolder$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 3: Variables (8 exercises) ==========
+    { id: 'ex-set1', title: 'List Variables', chapter: 'Ch3: Variables', points: 30, desc: 'View all variables.',
+      objectives: [
+        { text: 'Display all environment variables', pattern: /^set$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-set2', title: 'Create Variable', chapter: 'Ch3: Variables', points: 40, desc: 'Create your own variable.',
+      objectives: [
+        { text: 'Create a variable called name with your name', pattern: /^set\s+name=.+$/i },
+        { text: 'Display your name variable', pattern: /^echo\s+%name%$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-set3', title: 'Multiple Variables', chapter: 'Ch3: Variables', points: 50, desc: 'Work with multiple variables.',
+      objectives: [
+        { text: 'Create a variable called city', pattern: /^set\s+city=.+$/i },
+        { text: 'Create a variable called country', pattern: /^set\s+country=.+$/i },
+        { text: 'Display the city variable', pattern: /^echo\s+%city%$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-sysvar1', title: 'Username Variable', chapter: 'Ch3: Variables', points: 30, desc: 'Display system username.',
+      objectives: [
+        { text: 'Display the current username', pattern: /^echo\s+%username%$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-sysvar2', title: 'Date and Time', chapter: 'Ch3: Variables', points: 40, desc: 'Display date and time.',
+      objectives: [
+        { text: 'Display today\'s date', pattern: /^echo\s+%date%$/i },
+        { text: 'Display the current time', pattern: /^echo\s+%time%$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-sysvar3', title: 'Path Variables', chapter: 'Ch3: Variables', points: 50, desc: 'Display path variables.',
+      objectives: [
+        { text: 'Display the current directory using %CD%', pattern: /^echo\s+%cd%$/i },
+        { text: 'Display the user profile path', pattern: /^echo\s+%userprofile%$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-seta1', title: 'Basic Math', chapter: 'Ch3: Variables', points: 50, desc: 'Simple arithmetic.',
+      objectives: [
+        { text: 'Calculate 10 + 5 using SET /A', pattern: /^set\s+\/a\s+\w+\s*=\s*10\s*\+\s*5$/i },
+        { text: 'Calculate 20 - 8 using SET /A', pattern: /^set\s+\/a\s+\w+\s*=\s*20\s*-\s*8$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-seta2', title: 'More Math', chapter: 'Ch3: Variables', points: 60, desc: 'Advanced arithmetic.',
+      objectives: [
+        { text: 'Calculate 6 * 7 using SET /A', pattern: /^set\s+\/a\s+\w+\s*=\s*6\s*\*\s*7$/i },
+        { text: 'Calculate 100 / 4 using SET /A', pattern: /^set\s+\/a\s+\w+\s*=\s*100\s*\/\s*4$/i },
+        { text: 'Display the result', pattern: /^echo\s+%.+%$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 4: Pipes & Redirection (7 exercises) ==========
+    { id: 'ex-redir1', title: 'Save to File', chapter: 'Ch4: Pipes', points: 40, desc: 'Redirect output to a file.',
+      objectives: [
+        { text: 'Save DIR output to files.txt', pattern: /^dir\s*>\s*files\.txt$/i },
+        { text: 'View the saved file', pattern: /^type\s+files\.txt$/i }
+      ],
+      files: { 'sample.txt': {type:'file',content:'Sample'} }
+    },
+    { id: 'ex-redir2', title: 'Echo to File', chapter: 'Ch4: Pipes', points: 40, desc: 'Save echo output to file.',
+      objectives: [
+        { text: 'Save "Hello" to greeting.txt', pattern: /^echo\s+.+\s*>\s*greeting\.txt$/i },
+        { text: 'View greeting.txt', pattern: /^type\s+greeting\.txt$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-redir3', title: 'Append to File', chapter: 'Ch4: Pipes', points: 50, desc: 'Append content to existing file.',
+      objectives: [
+        { text: 'Add a line to log.txt using >>', pattern: /^echo\s+.+\s*>>\s*log\.txt$/i },
+        { text: 'Add another line to log.txt', pattern: /^echo\s+.+\s*>>\s*log\.txt$/i },
+        { text: 'View log.txt contents', pattern: /^type\s+log\.txt$/i }
+      ],
+      files: { 'log.txt': {type:'file',content:'Log started'} }
+    },
+    { id: 'ex-redir4', title: 'Create File', chapter: 'Ch4: Pipes', points: 50, desc: 'Create new file with redirection.',
+      objectives: [
+        { text: 'Create notes.txt with some content', pattern: /^echo\s+.+\s*>\s*notes\.txt$/i },
+        { text: 'Append more content', pattern: /^echo\s+.+\s*>>\s*notes\.txt$/i },
+        { text: 'Verify with DIR', pattern: /^dir$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-pipe1', title: 'Basic Pipe', chapter: 'Ch4: Pipes', points: 50, desc: 'Use the pipe operator.',
+      objectives: [
+        { text: 'Pipe DIR output to MORE', pattern: /^dir\s*\|\s*more$/i }
+      ],
+      files: { 'a.txt':{type:'file',content:'A'}, 'b.txt':{type:'file',content:'B'}, 'c.txt':{type:'file',content:'C'} }
+    },
+    { id: 'ex-chain1', title: 'Command Chaining', chapter: 'Ch4: Pipes', points: 50, desc: 'Run multiple commands.',
+      objectives: [
+        { text: 'Run DIR and ECHO on one line using &', pattern: /^.+\s*&\s*.+$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-chain2', title: 'Advanced Chaining', chapter: 'Ch4: Pipes', points: 60, desc: 'Practice command chaining.',
+      objectives: [
+        { text: 'Use && to chain two commands', pattern: /^.+\s*&&\s*.+$/i },
+        { text: 'Use | to pipe commands', pattern: /^.+\s*\|\s*.+$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 5: Network (6 exercises) ==========
+    { id: 'ex-hostname', title: 'Computer Name', chapter: 'Ch5: Network', points: 30, desc: 'Find your computer name.',
+      objectives: [
+        { text: 'Display this computer\'s name', pattern: /^hostname$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-ipconfig1', title: 'IP Address', chapter: 'Ch5: Network', points: 40, desc: 'View IP configuration.',
+      objectives: [
+        { text: 'Display IP configuration', pattern: /^ipconfig$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-ipconfig2', title: 'Network Details', chapter: 'Ch5: Network', points: 50, desc: 'View detailed network info.',
+      objectives: [
+        { text: 'Show basic IP config', pattern: /^ipconfig$/i },
+        { text: 'Display the computer hostname', pattern: /^hostname$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-ping1', title: 'Test Connection', chapter: 'Ch5: Network', points: 40, desc: 'Test network connectivity.',
+      objectives: [
+        { text: 'Ping localhost', pattern: /^ping\s+localhost$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-ping2', title: 'Ping Practice', chapter: 'Ch5: Network', points: 50, desc: 'Practice pinging hosts.',
+      objectives: [
+        { text: 'Ping google.com', pattern: /^ping\s+google\.com$/i },
+        { text: 'Ping 8.8.8.8', pattern: /^ping\s+8\.8\.8\.8$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-netstat', title: 'Network Connections', chapter: 'Ch5: Network', points: 50, desc: 'View active connections.',
+      objectives: [
+        { text: 'Display active network connections', pattern: /^netstat$/i },
+        { text: 'Show IP configuration', pattern: /^ipconfig$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 6: System (6 exercises) ==========
+    { id: 'ex-whoami', title: 'Current User', chapter: 'Ch6: System', points: 30, desc: 'Find who is logged in.',
+      objectives: [
+        { text: 'Display the current user', pattern: /^whoami$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-sysinfo1', title: 'System Info', chapter: 'Ch6: System', points: 40, desc: 'View system information.',
+      objectives: [
+        { text: 'Display system information', pattern: /^systeminfo$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-sysinfo2', title: 'System Overview', chapter: 'Ch6: System', points: 50, desc: 'Get system details.',
+      objectives: [
+        { text: 'Show current user', pattern: /^whoami$/i },
+        { text: 'Show system info', pattern: /^systeminfo$/i },
+        { text: 'Show computer name', pattern: /^hostname$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-task1', title: 'List Processes', chapter: 'Ch6: System', points: 40, desc: 'View running processes.',
+      objectives: [
+        { text: 'Display all running processes', pattern: /^tasklist$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-task2', title: 'Process Info', chapter: 'Ch6: System', points: 50, desc: 'Explore running processes.',
+      objectives: [
+        { text: 'List all processes', pattern: /^tasklist$/i },
+        { text: 'Display current user', pattern: /^whoami$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-combined', title: 'System Check', chapter: 'Ch6: System', points: 60, desc: 'Complete system check.',
+      objectives: [
+        { text: 'Show hostname', pattern: /^hostname$/i },
+        { text: 'Show current user', pattern: /^whoami$/i },
+        { text: 'Show IP configuration', pattern: /^ipconfig$/i },
+        { text: 'List running processes', pattern: /^tasklist$/i }
+      ],
+      files: {}
+    },
+
+    // ========== Chapter 7: Batch Scripting (7 exercises) ==========
+    { id: 'ex-batch1', title: 'First Batch File', chapter: 'Ch7: Batch', points: 50, desc: 'Create your first batch file.',
+      objectives: [
+        { text: 'Create hello.bat with echo command', pattern: /^echo\s+.+\s*>\s*hello\.bat$/i },
+        { text: 'View your batch file', pattern: /^type\s+hello\.bat$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-batch2', title: 'Multi-line Batch', chapter: 'Ch7: Batch', points: 60, desc: 'Create batch with multiple lines.',
+      objectives: [
+        { text: 'Create script.bat with first line', pattern: /^echo\s+.+\s*>\s*script\.bat$/i },
+        { text: 'Append a second line', pattern: /^echo\s+.+\s*>>\s*script\.bat$/i },
+        { text: 'Append a third line', pattern: /^echo\s+.+\s*>>\s*script\.bat$/i },
+        { text: 'View the complete script', pattern: /^type\s+script\.bat$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-batch3', title: '@ECHO OFF', chapter: 'Ch7: Batch', points: 60, desc: 'Use @echo off in batch.',
+      objectives: [
+        { text: 'Start batch with @echo off', pattern: /^echo\s+@echo\s+off\s*>\s*\w+\.bat$/i },
+        { text: 'Add a command', pattern: /^echo\s+.+\s*>>\s*\w+\.bat$/i },
+        { text: 'View the file', pattern: /^type\s+\w+\.bat$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-if1', title: 'IF Basics', chapter: 'Ch7: Batch', points: 50, desc: 'Use IF conditions.',
+      objectives: [
+        { text: 'Create a test variable', pattern: /^set\s+\w+=.+$/i },
+        { text: 'Use IF to check a condition', pattern: /^if\s+.+$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-if2', title: 'IF EXIST', chapter: 'Ch7: Batch', points: 60, desc: 'Check if files exist.',
+      objectives: [
+        { text: 'Check if test.txt exists', pattern: /^if\s+exist\s+test\.txt\s+.+$/i },
+        { text: 'Check if missing.txt does NOT exist', pattern: /^if\s+not\s+exist\s+missing\.txt\s+.+$/i }
+      ],
+      files: { 'test.txt': {type:'file',content:'I exist!'} }
+    },
+    { id: 'ex-for1', title: 'FOR Loop', chapter: 'Ch7: Batch', points: 60, desc: 'Use FOR to count.',
+      objectives: [
+        { text: 'Count from 1 to 5 with FOR /L', pattern: /^for\s+\/l\s+%\w+\s+in\s+\(1,1,5\)\s+do\s+.+$/i }
+      ],
+      files: {}
+    },
+    { id: 'ex-for2', title: 'FOR Practice', chapter: 'Ch7: Batch', points: 70, desc: 'More FOR loop practice.',
+      objectives: [
+        { text: 'Count from 1 to 10', pattern: /^for\s+\/l\s+%\w+\s+in\s+\(1,1,10\)\s+do\s+.+$/i },
+        { text: 'Count by 2s (0,2,4,6,8,10)', pattern: /^for\s+\/l\s+%\w+\s+in\s+\(0,2,10\)\s+do\s+.+$/i }
+      ],
+      files: {}
+    }
+];
+
+// ============================================
+// STATE
+// ============================================
+let STATE = { 
+    points: 0, 
+    completed: new Set(), 
+    currentItem: null, 
+    mode: 'tutorial',
+    currentTutorialId: null, 
+    hist: [], 
+    hIdx: -1 
+};
+let currentExercise = null;
+let currentObjectives = [];
+let FS = {}, PATH = 'C:\\Users\\Student', VARS = {};
+
+// ============================================
+// CHAPTER LOCKING
+// ============================================
+function getChapterExercises(chapterName) {
+    return EXERCISES.filter(ex => ex.chapter === chapterName);
+}
+
+function isChapterComplete(chapterName) {
+    const chapterExercises = getChapterExercises(chapterName);
+    return chapterExercises.every(ex => STATE.completed.has(ex.id));
+}
+
+function isChapterUnlocked(chapterName) {
+    return true; // All chapters always accessible
+}
+
+// ============================================
+// FILESYSTEM
+// ============================================
+function initFS(files) {
+    FS = { 'C:': { type: 'folder', children: { 'Users': { type: 'folder', children: { 'Student': { type: 'folder', children: files || {} } } } } } };
+    PATH = 'C:\\Users\\Student';
+    VARS = { 
+        username: 'Student', 
+        computername: 'BARZAN-LAB', 
+        date: new Date().toLocaleDateString(), 
+        time: new Date().toLocaleTimeString(), 
+        cd: PATH, 
+        userprofile: 'C:\\Users\\Student',
+        random: Math.floor(Math.random() * 32767)
+    };
+}
+
+function getFolder(path) {
+    let parts = path.split('\\').filter(p => p);
+    let cur = FS;
+    for (let p of parts) {
+        if (p.endsWith(':')) {
+            cur = cur[p];
+        } else if (cur && cur.children) {
+            // Case-insensitive folder lookup (Windows-like behavior)
+            let found = null;
+            for (let key of Object.keys(cur.children)) {
+                if (key.toLowerCase() === p.toLowerCase()) {
+                    found = cur.children[key];
+                    break;
+                }
+            }
+            cur = found;
+        } else {
+            cur = null;
+        }
+        if (!cur) return null;
+    }
+    return cur;
+}
+
+// Helper function for case-insensitive file lookup
+function findFile(folder, fileName) {
+    if (!folder || !folder.children) return null;
+    for (let key of Object.keys(folder.children)) {
+        if (key.toLowerCase() === fileName.toLowerCase()) {
+            return { name: key, item: folder.children[key] };
+        }
+    }
+    return null;
+}
+
+function currentFolder() { return getFolder(PATH); }
+
+// ============================================
+// COMMAND PROCESSOR
+// ============================================
+function processCommand(cmdLine, pipedInput = '') {
+    const original = String(cmdLine ?? '');
+    let trimmed = original.trim();
+    if (!trimmed) return '';
+
+    // ---------- helpers ----------
+    const isErrorOutput = (s) => {
+        if (!s) return false;
+        const t = String(s).toLowerCase();
+        return (
+            t.includes('not recognized as an internal or external command') ||
+            t.includes('cannot find the path specified') ||
+            t.includes('cannot find the file specified') ||
+            t.includes('directory not found') ||
+            t.includes('access is denied') ||
+            t.startsWith('the syntax of the command is incorrect')
+        );
+    };
+
+    const pathJoin = (base, child) => {
+        if (!base) return child;
+        if (!child) return base;
+        return base.endsWith('\\') ? (base + child) : (base + '\\' + child);
+    };
+
+    const stripOuterQuotes = (s) => {
+        s = (s ?? '').trim();
+        if (s.length >= 2 && s.startsWith('"') && s.endsWith('"')) return s.slice(1, -1);
+        return s;
+    };
+
+    const splitOutsideQuotes = (s, ch) => {
+        let out = [];
+        let buf = '';
+        let inQ = false;
+        for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c === '"') { inQ = !inQ; buf += c; continue; }
+            if (!inQ && c === ch) {
+                out.push(buf.trim());
+                buf = '';
+            } else {
+                buf += c;
+            }
+        }
+        out.push(buf.trim());
+        return out.filter(x => x.length);
+    };
+
+    const parseChain = (s) => {
+        let segs = [];
+        let ops = [];
+        let buf = '';
+        let inQ = false;
+        for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c === '"') { inQ = !inQ; buf += c; continue; }
+            if (!inQ) {
+                if (s.startsWith('&&', i)) { segs.push(buf.trim()); ops.push('&&'); buf = ''; i++; continue; }
+                if (s.startsWith('||', i)) { segs.push(buf.trim()); ops.push('||'); buf = ''; i++; continue; }
+                if (c === '&') { segs.push(buf.trim()); ops.push('&'); buf = ''; continue; }
+            }
+            buf += c;
+        }
+        segs.push(buf.trim());
+        segs = segs.filter(x => x.length);
+        return { segs, ops };
+    };
+
+    const parseRedirection = (s) => {
+        // returns {cmd, op, file} or null
+        let inQ = false;
+        for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c === '"') { inQ = !inQ; continue; }
+            if (!inQ && c === '>') {
+                const op = (i + 1 < s.length && s[i + 1] === '>') ? '>>' : '>';
+                const left = s.slice(0, i).trim();
+                const right = s.slice(i + op.length).trim();
+                if (!right) return null;
+                return { cmd: left, op, file: stripOuterQuotes(right) };
+            }
+        }
+        return null;
+    };
+
+    const runSingle = (line, inputForCmd = '') => {
+        let trimmedLocal = String(line ?? '').trim();
+        if (!trimmedLocal) return { out: '', ok: true };
+
+        const lowerCmdLine = trimmedLocal.toLowerCase();
+        const parts = trimmedLocal.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        switch (cmd) {
+            case 'help':
+                return { out: 'Try: DIR, CD, CLS, ECHO, TYPE, COPY, DEL, REN, MD, RD, SET, PING, IPCONFIG, HOSTNAME, WHOAMI, TASKLIST', ok: true };
+
+            case 'cls':
+                document.getElementById('output').innerHTML = '';
+                return { out: '', ok: true };
+
+            case 'cd': {
+                if (!args.length) return { out: PATH, ok: true };
+                const targetRaw = args.join(' ');
+                const target = stripOuterQuotes(targetRaw).trim();
+                const tLower = target.toLowerCase();
+
+                // Stay on current directory
+                if (tLower === '.') {
+                    VARS.cd = PATH;
+                    return { out: '', ok: true };
+                }
+
+                // Go to root of current drive
+                if (tLower === '\\' || tLower === '/') {
+                    const drive = PATH.split('\\')[0]; // e.g. C:
+                    PATH = drive + '\\';
+                    VARS.cd = PATH;
+                    return { out: '', ok: true };
+                }
+
+                // Go up one level
+                if (tLower === '..') {
+                    let p = PATH.split('\\').filter(x => x !== '');
+                    // p looks like ["C:", "Users", "Student", ...]
+                    if (p.length > 1) p.pop();
+                    PATH = p[0] + '\\' + p.slice(1).join('\\');
+                    if (PATH.endsWith('\\') && PATH !== (p[0] + '\\')) {
+                        // ensure no trailing slash except root
+                        PATH = PATH.slice(0, -1);
+                    }
+                    if (p.length === 1) PATH = p[0] + '\\';
+                    VARS.cd = PATH;
+                    return { out: '', ok: true };
+                }
+
+                // Enter a child folder (case-insensitive)
+                const curFolder = currentFolder();
+                if (curFolder && curFolder.children) {
+                    let found = null;
+                    let actualName = null;
+                    for (let key of Object.keys(curFolder.children)) {
+                        if (key.toLowerCase() === tLower) {
+                            found = curFolder.children[key];
+                            actualName = key;
+                            break;
+                        }
+                    }
+                    if (found && found.type === 'folder') {
+                        PATH = pathJoin(PATH, actualName);
+                        VARS.cd = PATH;
+                        return { out: '', ok: true };
+                    }
+                }
+                return { out: 'The system cannot find the path specified.', ok: false };
+            }
+
+            case 'dir': {
+                const showHiddenOnly = lowerCmdLine.includes('/ah');
+                const bare = lowerCmdLine.includes('/b');
+                const wide = lowerCmdLine.includes('/w');
+                const recursive = lowerCmdLine.includes('/s');
+
+                const formatWide = (names) => {
+                    const colWidth = 20;
+                    const cols = 4;
+                    let lines = [];
+                    for (let i = 0; i < names.length; i += cols) {
+                        let row = names.slice(i, i + cols).map(n => (n + ' '.repeat(colWidth)).slice(0, colWidth)).join('');
+                        lines.push('  ' + row.trimEnd());
+                    }
+                    return lines.join('\n');
+                };
+
+                const listOneFolder = (folder, folderPath) => {
+                    if (!folder || !folder.children) return { text: 'Directory not found.', count: 0, ok: false };
+                    let entries = [];
+                    for (let [name, item] of Object.entries(folder.children)) {
+                        const isHidden = !!item.hidden;
+                        if (showHiddenOnly && !isHidden) continue;
+                        if (!showHiddenOnly && isHidden) continue;
+                        entries.push({ name, item });
+                    }
+
+                    // stable ordering
+                    entries.sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+
+                    let out = bare ? '' : ('\n Directory of ' + folderPath + '\n\n');
+                    if (bare) {
+                        out += entries.map(e => e.name).join('\n');
+                    } else if (wide) {
+                        out += formatWide(entries.map(e => e.name));
+                    } else {
+                        out += entries.map(e => '  ' + (e.item.type === 'folder' ? '<DIR>' : '     ') + '  ' + e.name).join('\n');
+                    }
+                    if (!bare) out += '\n\n  ' + entries.length + ' item(s)';
+                    return { text: out || 'Directory is empty.', count: entries.length, ok: true };
+                };
+
+                const walk = (folder, folderPath, acc) => {
+                    const r = listOneFolder(folder, folderPath);
+                    if (!r.ok) return r;
+                    acc.push(r.text);
+                    // recurse into child folders
+                    for (let [name, item] of Object.entries(folder.children || {})) {
+                        const isHidden = !!item.hidden;
+                        if (showHiddenOnly && !isHidden) continue;
+                        if (!showHiddenOnly && isHidden) continue;
+                        if (item.type === 'folder') {
+                            walk(item, pathJoin(folderPath.endsWith('\\') ? folderPath : folderPath, name), acc);
+                        }
+                    }
+                    return { out: acc.join('\n'), ok: true };
+                };
+
+                const folder = currentFolder();
+                if (!recursive) {
+                    const r = listOneFolder(folder, PATH);
+                    return { out: r.text, ok: r.ok };
+                } else {
+                    let acc = [];
+                    const r = walk(folder, PATH, acc);
+                    return { out: r.ok ? r.out : r.text, ok: r.ok };
+                }
+            }
+
+            case 'more':
+                if (inputForCmd && inputForCmd.length) {
+                    return { out: inputForCmd + '\n[Paged output - press any key]', ok: true };
+                }
+                return { out: '[Paged output - press any key]', ok: true };
+
+            case 'find': {
+                // FIND [/I] "text"
+                let insensitive = false;
+                let rest = args.join(' ');
+                if (args[0] && args[0].toLowerCase() === '/i') {
+                    insensitive = true;
+                    rest = args.slice(1).join(' ');
+                }
+                const needle = stripOuterQuotes(rest);
+                const hay = String(inputForCmd ?? '');
+                if (!needle) return { out: 'The syntax of the command is incorrect.', ok: false };
+                const lines = hay.split(/\r?\n/);
+                const outLines = lines.filter(line => {
+                    if (insensitive) return line.toLowerCase().includes(needle.toLowerCase());
+                    return line.includes(needle);
+                });
+                return { out: outLines.join('\n'), ok: true };
+            }
+
+            case 'echo': {
+                if (!args.length) return { out: 'ECHO is on.', ok: true };
+                let text = args.join(' ');
+                // treat ECHO. as blank line
+                if (text.trim() === '.' || text.trim().toLowerCase() === 'off' || text.trim().toLowerCase() === 'on') {
+                    // keep simple: still echo the token (lab scope)
+                }
+                for (let [k, v] of Object.entries(VARS)) {
+                    text = text.replace(new RegExp('%' + k + '%', 'gi'), v);
+                }
+                return { out: text.replace(/^echo\s+/i, ''), ok: true };
+            }
+
+            case 'type': {
+                if (!args.length) return { out: 'The syntax of the command is incorrect.', ok: false };
+                const tf = currentFolder();
+                const typeFile = findFile(tf, args[0]);
+                if (typeFile && typeFile.item.type === 'file') return { out: typeFile.item.content, ok: true };
+                return { out: 'The system cannot find the file specified.', ok: false };
+            }
+
+            case 'copy': {
+                if (args.length < 2) return { out: 'The syntax of the command is incorrect.', ok: false };
+                let folder = currentFolder();
+                if (!folder) return { out: 'Directory not found.', ok: false };
+                let src = findFile(folder, args[0]);
+                if (!src || src.item.type !== 'file') return { out: 'The system cannot find the file specified.', ok: false };
+
+                let destName = stripOuterQuotes(args[1]);
+                let existing = findFile(folder, destName);
+                let data = src.item.content;
+
+                if (existing) folder.children[existing.name] = { type:'file', content:data };
+                else folder.children[destName] = { type:'file', content:data };
+
+                return { out: '        1 file(s) copied.', ok: true };
+            }
+
+            case 'del': {
+                if (!args.length) return { out: 'The syntax of the command is incorrect.', ok: false };
+                let folder = currentFolder();
+                if (!folder) return { out: 'Directory not found.', ok: false };
+                let target = findFile(folder, args[0]);
+                if (target && target.item.type === 'file') { delete folder.children[target.name]; return { out: '', ok: true }; }
+                return { out: 'The system cannot find the file specified.', ok: false };
+            }
+
+            case 'ren': {
+                if (args.length < 2) return { out: 'The syntax of the command is incorrect.', ok: false };
+                let folder = currentFolder();
+                if (!folder) return { out: 'Directory not found.', ok: false };
+                let target = findFile(folder, args[0]);
+                if (target) {
+                    folder.children[args[1]] = target.item;
+                    delete folder.children[target.name];
+                    return { out: '', ok: true };
+                }
+                return { out: 'The system cannot find the file specified.', ok: false };
+            }
+
+            case 'md':
+            case 'mkdir': {
+                if (!args.length) return { out: 'The syntax of the command is incorrect.', ok: false };
+                let folder = currentFolder();
+                if (!folder) return { out: 'Directory not found.', ok: false };
+                let name = stripOuterQuotes(args[0]);
+                if (!folder.children) folder.children = {};
+                if (folder.children[name]) return { out: 'A subdirectory or file ' + name + ' already exists.', ok: false };
+                folder.children[name] = { type:'folder', children:{} };
+                return { out: '', ok: true };
+            }
+
+            case 'rd':
+            case 'rmdir': {
+                if (!args.length) return { out: 'The syntax of the command is incorrect.', ok: false };
+                let folder = currentFolder();
+                if (!folder) return { out: 'Directory not found.', ok: false };
+                let name = stripOuterQuotes(args[0]);
+                let found = null;
+                let actualName = null;
+                for (let key of Object.keys(folder.children || {})) {
+                    if (key.toLowerCase() === name.toLowerCase()) { found = folder.children[key]; actualName = key; break; }
+                }
+                if (found && found.type === 'folder') { delete folder.children[actualName]; return { out: '', ok: true }; }
+                return { out: 'The system cannot find the path specified.', ok: false };
+            }
+
+            case 'set': {
+                if (!args.length) return { out: Object.entries(VARS).map(([k,v]) => k + '=' + v).join('\n'), ok: true };
+                let setStr = args.join(' ');
+                if (setStr.toLowerCase().startsWith('/a ')) {
+                    let m = setStr.substring(3).match(/(\w+)\s*=\s*(.+)/);
+                    if (m) {
+                        try {
+                            let expr = m[2].replace(/%(\w+)%/gi, (_, v) => VARS[v.toLowerCase()] ?? 0);
+                            // allow only arithmetic
+                            if (!/^[0-9+\-*/%().\s]+$/.test(expr)) return { out: 'Invalid expression.', ok: false };
+                            // eslint-disable-next-line no-new-func
+                            const val = Function('"use strict"; return (' + expr + ');')();
+                            VARS[m[1].toLowerCase()] = String(val);
+                            return { out: VARS[m[1].toLowerCase()], ok: true };
+                        } catch(e) { return { out: 'Invalid expression.', ok: false }; }
+                    }
+                    return { out: 'The syntax of the command is incorrect.', ok: false };
+                } else {
+                    let m = setStr.match(/(\w+)=(.*)$/);
+                    if (m) VARS[m[1].toLowerCase()] = m[2];
+                    return { out: '', ok: true };
+                }
+            }
+
+            case 'hostname':
+                return { out: VARS.computername, ok: true };
+
+            case 'ipconfig':
+                return { out: "Windows IP Configuration\n\nEthernet adapter Ethernet:\n   IPv4 Address. . . . . : 192.168.1.100\n   Subnet Mask . . . . . : 255.255.255.0\n   Default Gateway . . . : 192.168.1.1", ok: true };
+
+            case 'ping':
+                return { out: "Pinging " + (args[0] || '127.0.0.1') + " with 32 bytes of data:\nReply from " + (args[0] || '127.0.0.1') + ": bytes=32 time<1ms TTL=128", ok: true };
+
+            case 'netstat':
+                return { out: "Active Connections\n\n  Proto  Local Address          Foreign Address        State\n  TCP    127.0.0.1:49731        127.0.0.1:49732        ESTABLISHED", ok: true };
+
+            case 'whoami':
+                return { out: "barzan-lab\\" + (VARS.username || 'Student'), ok: true };
+
+            case 'systeminfo':
+                return { out: "Host Name:                 " + VARS.computername + "\nOS Name:                   Microsoft Windows 10 Pro\nOS Version:                10.0.19045 N/A Build 19045", ok: true };
+
+            case 'tasklist':
+                return { out: "Image Name                     PID Session Name        Session#    Mem Usage\n========================= ======== ================ =========== ============\nSystem Idle Process              0 Services                   0         24 K\nchrome.exe                    1234 Console                    1    120,000 K\nexplorer.exe                  2222 Console                    1     55,000 K", ok: true };
+
+            case 'if':
+                return { out: 'IF command example (simulated).', ok: true };
+
+            case 'for':
+                return { out: 'FOR command example (simulated).', ok: true };
+
+            default:
+                return { out: "'" + parts[0] + "' is not recognized as an internal or external command.", ok: false };
+        }
+    };
+
+    const runNoChain = (line, inputForStage = '') => {
+        // Handle pipelines inside this segment
+        const pipeSegs = splitOutsideQuotes(line, '|');
+        if (pipeSegs.length > 1) {
+            let input = inputForStage;
+            let ok = true;
+            for (let i = 0; i < pipeSegs.length; i++) {
+                const stage = pipeSegs[i];
+                const redir = parseRedirection(stage);
+                if (redir) {
+                    const res = runSingle(redir.cmd, input);
+                    // write to file
+                    const folder = currentFolder();
+                    if (!folder) return { out: 'Directory not found.', ok: false };
+                    const targetName = redir.file;
+                    const existing = findFile(folder, targetName);
+                    if (redir.op === '>') {
+                        if (existing) delete folder.children[existing.name];
+                        folder.children[targetName] = { type: 'file', content: res.out };
+                    } else {
+                        if (existing) existing.item.content += (existing.item.content ? '\n' : '') + res.out;
+                        else folder.children[targetName] = { type: 'file', content: res.out };
+                    }
+                    input = ''; // redirected output doesn't continue down the pipe
+                    ok = ok && res.ok;
+                } else {
+                    const res = runSingle(stage, input);
+                    input = res.out;
+                    ok = ok && res.ok;
+                }
+            }
+            return { out: input, ok };
+        }
+
+        // Redirection (no pipe)
+        const redir = parseRedirection(line);
+        if (redir) {
+            const res = runSingle(redir.cmd, inputForStage);
+            const folder = currentFolder();
+            if (!folder) return { out: 'Directory not found.', ok: false };
+            const targetName = redir.file;
+            const existing = findFile(folder, targetName);
+            if (redir.op === '>') {
+                if (existing) delete folder.children[existing.name];
+                folder.children[targetName] = { type: 'file', content: res.out };
+            } else {
+                if (existing) existing.item.content += (existing.item.content ? '\n' : '') + res.out;
+                else folder.children[targetName] = { type: 'file', content: res.out };
+            }
+            return { out: '', ok: res.ok };
+        }
+
+        return runSingle(line, inputForStage);
+    };
+
+    // ---------- chaining ----------
+    const parsed = parseChain(trimmed);
+    if (parsed.ops.length) {
+        let outParts = [];
+        let prevOk = true;
+        for (let i = 0; i < parsed.segs.length; i++) {
+            const seg = parsed.segs[i];
+            if (!seg) continue;
+
+            // decide whether to run this segment based on previous operator
+            if (i > 0) {
+                const op = parsed.ops[i - 1];
+                if (op === '&&' && !prevOk) continue;
+                if (op === '||' && prevOk) continue;
+            }
+
+            const res = runNoChain(seg, pipedInput);
+            const ok = res.ok && !isErrorOutput(res.out);
+            prevOk = ok;
+
+            if (res.out) outParts.push(res.out);
+        }
+        return outParts.join('\n');
+    }
+
+    // No chaining, but may include pipes/redirection
+    return runNoChain(trimmed, pipedInput).out;
+}
+
+// ============================================
+// UI FUNCTIONS
+// ============================================
+function updateDisplay() {
+    document.getElementById('promptText').textContent = PATH + '>';
+    document.getElementById('filesPath').textContent = PATH;
+    let folder = currentFolder();
+    let list = document.getElementById('filesList');
+    list.innerHTML = '';
+    if (folder && folder.children) {
+        for (let [name, item] of Object.entries(folder.children)) {
+            if (item.hidden) continue;
+            let div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = '<span>' + (item.type === 'folder' ? '📁' : '📄') + '</span><span>' + name + '</span>';
+            list.appendChild(div);
+        }
+    }
+    if (list.innerHTML === '') {
+        list.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:5px;">Empty directory</div>';
+    }
+}
+
+function addOutput(cls, text) {
+    let output = document.getElementById('output');
+    let line = document.createElement('div');
+    line.className = 'line ' + cls;
+    line.textContent = text;
+    output.appendChild(line);
+    output.scrollTop = output.scrollHeight;
+}
+
+function addCommandLine(cmd) {
+    const output = document.getElementById('output');
+    const line = document.createElement('div');
+    line.className = 'line';
+
+    const prompt = document.createElement('span');
+    prompt.className = 'prompt';
+    prompt.textContent = PATH + '>';
+
+    const space = document.createTextNode(' ');
+
+    const cmdSpan = document.createElement('span');
+    cmdSpan.className = 'cmd';
+    cmdSpan.textContent = cmd;
+
+    line.appendChild(prompt);
+    line.appendChild(space);
+    line.appendChild(cmdSpan);
+    output.appendChild(line);
+}
+
+function clearTerm() { 
+    document.getElementById('output').innerHTML = ''; 
+}
+
+function executeCommand() {
+    let input = document.getElementById('cmdInput');
+    let cmd = input.value.trim();
+    if (!cmd) return;
+    
+    STATE.hist.push(cmd);
+    STATE.hIdx = STATE.hist.length;
+    
+    addCommandLine(cmd);
+    let result = processCommand(cmd);
+    if (result) addOutput('result', result);
+    
+    // Check objectives with regex patterns
+    if (currentExercise && currentObjectives.length > 0) {
+        let anyCompleted = false;
+        
+        currentObjectives.forEach((obj, idx) => {
+            if (!obj.done && obj.pattern.test(cmd)) {
+                obj.done = true;
+                anyCompleted = true;
+                addOutput('success', '✓ ' + obj.text);
+            }
+        });
+        
+        if (anyCompleted) {
+            renderObjectives();
+            
+            // Check if ALL objectives are done
+            let allDone = currentObjectives.every(o => o.done);
+            if (allDone && !STATE.completed.has(currentExercise.id)) {
+                setTimeout(completeExercise, 500);
+            }
+        }
+    }
+    
+    updateDisplay();
+    input.value = '';
+}
+
+function renderObjectives() {
+    let html = '<div class="exercise-header"><span>Objectives</span><span class="exercise-points">' + currentExercise.points + ' pts</span></div>';
+    html += '<div class="exercise-desc">' + currentExercise.desc + '</div>';
+    html += '<div class="objectives-title">Complete all objectives:</div>';
+    html += '<ul class="objectives">';
+    currentObjectives.forEach((obj, i) => {
+        html += '<li class="obj ' + (obj.done ? 'done' : '') + '">';
+        html += '<div class="obj-check ' + (obj.done ? 'done' : '') + '">' + (obj.done ? '✓' : (i+1)) + '</div>';
+        html += '<span class="obj-text ' + (obj.done ? 'done' : '') + '">' + obj.text + '</span>';
+        html += '</li>';
+    });
+    html += '</ul>';
+    document.getElementById('exerciseInfo').innerHTML = html;
+}
+
+// ============================================
+// EXERCISE MANAGEMENT
+// ============================================
+function getTutorialIdForChapter(chapterName) {
+    const entry = Object.entries(TUTORIALS).find(([id, t]) => t.chapter === chapterName);
+    return entry ? entry[0] : null;
+}
+
+// Render a tutorial into the tutorial panel.
+// If preserveExercise=true, we do NOT reset currentExercise/objectives/FS,
+// so the user can switch back to the exercise without losing progress.
+function showTutorial(tutId, preserveExercise) {
+    const tut = TUTORIALS[tutId];
+    if (!tut) {
+        console.error('Tutorial not found:', tutId);
+        return;
+    }
+
+    document.getElementById('contentTitle').textContent = tut.title;
+    document.getElementById('contentSubtitle').textContent = tut.chapter + ' - Tutorial';
+    document.getElementById('tutorialPanel').innerHTML = tut.content;
+
+    STATE.currentTutorialId = tutId;
+
+    if (!preserveExercise) {
+        currentExercise = null;
+        currentObjectives = [];
+        initFS({});
+        updateDisplay();
+    }
+
+    updateQuickRef();
+}
+
+function setMode(mode) {
+    STATE.mode = mode;
+
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('[data-mode="' + mode + '"]').classList.add('active');
+
+    document.getElementById('tutorialPanel').classList.toggle('hidden', mode !== 'tutorial');
+    document.getElementById('exercisePanel').classList.toggle('active', mode === 'exercise');
+
+    // When switching tabs, ensure the content matches the *current chapter*.
+    if (mode === 'tutorial') {
+        let chapterName = null;
+
+        if (currentExercise) {
+            chapterName = currentExercise.chapter;
+        } else if (STATE.currentItem && TUTORIALS[STATE.currentItem]) {
+            chapterName = TUTORIALS[STATE.currentItem].chapter;
+        } else if (STATE.currentItem) {
+            const ex = EXERCISES.find(e => e.id === STATE.currentItem);
+            if (ex) chapterName = ex.chapter;
+        }
+
+        let tutId = chapterName ? getTutorialIdForChapter(chapterName) : null;
+        if (!tutId) tutId = STATE.currentTutorialId || 'tut-nav';
+
+        // Preserve exercise progress if there is an active exercise.
+        const preserve = !!currentExercise;
+
+        // Only re-render if needed.
+        if (tutId && tutId !== STATE.currentTutorialId) {
+            showTutorial(tutId, preserve);
+        } else if (tutId && !document.getElementById('tutorialPanel').innerHTML.trim()) {
+            showTutorial(tutId, preserve);
+        }
+    } else if (mode === 'exercise') {
+        // Restore exercise header if user returns from tutorial tab.
+        if (currentExercise) {
+            document.getElementById('contentTitle').textContent = currentExercise.title;
+            document.getElementById('contentSubtitle').textContent = currentExercise.chapter + ' - Exercise';
+        }
+    }
+}
+
+
+function loadItem(id) {
+    if (!id) {
+        console.error('loadItem called with no id');
+        return;
+    }
+    
+    STATE.currentItem = id;
+    
+    if (TUTORIALS[id]) {
+        loadTutorial(id);
+        setMode('tutorial');
+    } else {
+        let ex = EXERCISES.find(e => e.id === id);
+        if (ex) { 
+            loadExercise(ex); 
+            setMode('exercise'); 
+        } else {
+            console.error('Item not found:', id);
+        }
+    }
+    
+    updateNav();
+    updateQuickRef();
+}
+
+function loadTutorial(id) {
+    const tut = TUTORIALS[id];
+    if (!tut) {
+        console.error('Tutorial not found:', id);
+        return;
+    }
+
+    // In nav/tutorial selection, we reset exercise context (fresh tutorial mode)
+    showTutorial(id, false);
+}
+
+
+function loadExercise(ex) {
+    currentExercise = ex;
+    currentObjectives = ex.objectives.map(o => ({ 
+        text: o.text, 
+        pattern: o.pattern, 
+        done: false 
+    }));
+    
+    initFS(JSON.parse(JSON.stringify(ex.files)));
+    
+    document.getElementById('contentTitle').textContent = ex.title;
+    document.getElementById('contentSubtitle').textContent = ex.chapter + ' - Exercise';
+    
+    renderObjectives();
+    clearTerm();
+    updateDisplay();
+    updateQuickRef();
+    
+    addOutput('sys', '════════════════════════════════════════════════════════');
+    addOutput('sys', '  EXERCISE: ' + ex.title.toUpperCase());
+    addOutput('sys', '  Points: ' + ex.points + ' | Chapter: ' + ex.chapter);
+    addOutput('sys', '════════════════════════════════════════════════════════');
+    addOutput('result', '\n' + ex.desc + '\n');
+    addOutput('result', 'Complete all objectives to earn points!\n');
+}
+
+function completeExercise() {
+    if (!currentExercise) return;
+    if (STATE.completed.has(currentExercise.id)) return;
+    
+    // Add points and mark complete
+    STATE.points += currentExercise.points;
+    STATE.completed.add(currentExercise.id);
+    
+    // Save immediately
+    saveProgress();
+    
+    // Check if this completes a chapter
+    let chapterName = currentExercise.chapter;
+    let chapterComplete = isChapterComplete(chapterName);
+    
+    // Update UI
+    updateStats();
+    updateNav();
+    
+    // Show success message in terminal
+    addOutput('success', '\n🎉 EXERCISE COMPLETE! +' + currentExercise.points + ' POINTS!\n');
+    
+    if (chapterComplete) {
+        addOutput('success', '✓ ' + chapterName + ' complete!\n');
+    }
+    
+    // Auto-advance to next exercise after a short delay
+    let idx = EXERCISES.findIndex(e => e.id === currentExercise.id);
+    if (idx < EXERCISES.length - 1) {
+        setTimeout(() => {
+            loadItem(EXERCISES[idx + 1].id);
+        }, 1500);
+    }
+}
+
+function resetExercise() {
+    if (currentExercise) loadExercise(currentExercise);
+}
+
+function updateNav() {
+    let html = '';
+    
+    CHAPTERS.forEach(chapter => {
+        let chapterExercises = getChapterExercises(chapter.name);
+        let chapterTutorial = Object.entries(TUTORIALS).find(([id, t]) => t.chapter === chapter.name);
+        let completedCount = chapterExercises.filter(ex => STATE.completed.has(ex.id)).length;
+        let totalCount = chapterExercises.length;
+        let complete = isChapterComplete(chapter.name);
+        
+        let statusClass = complete ? 'complete' : 'unlocked';
+        let statusText = complete ? '✓ DONE' : completedCount + '/' + totalCount;
+        
+        html += '<div class="nav-chapter">';
+        let tutIdHeader = chapterTutorial ? chapterTutorial[0] : null;
+        html += '<div class="nav-chapter-header"' + (tutIdHeader ? ' onclick="loadItem(\'' + tutIdHeader + '\')" style="cursor:pointer;"' : '') + '>';
+        html += '<span class="nav-chapter-title">' + chapter.name + '</span>';
+        html += '<span class="nav-chapter-status ' + statusClass + '">' + statusText + '</span>';
+        html += '</div>';
+        
+        // Tutorial
+        if (chapterTutorial) {
+            let [tutId, tut] = chapterTutorial;
+            let active = STATE.currentItem === tutId ? 'active' : '';
+            html += '<div class="nav-item ' + active + '" onclick="loadItem(\'' + tutId + '\')">';
+            html += '<span class="icon">📖</span>';
+            html += '<span class="title">' + tut.title + '</span>';
+            html += '</div>';
+        }
+        
+        // Exercises
+        chapterExercises.forEach(ex => {
+            let active = STATE.currentItem === ex.id ? 'active' : '';
+            let completed = STATE.completed.has(ex.id) ? 'completed' : '';
+            
+            html += '<div class="nav-item ' + active + ' ' + completed + '" onclick="loadItem(\'' + ex.id + '\')">';
+            html += '<span class="icon">⚡</span>';
+            html += '<span class="title">' + ex.title + '</span>';
+            html += '<span class="badge">' + ex.points + '</span>';
+            if (STATE.completed.has(ex.id)) html += '<span class="check">✓</span>';
+            html += '</div>';
+        });
+        
+        html += '</div>';
+    });
+    
+    document.getElementById('navSection').innerHTML = html;
+}
+
+function updateStats() {
+    let total = EXERCISES.length;
+    let done = STATE.completed.size;
+    let pct = Math.round((done / total) * 100);
+    
+    document.getElementById('pts').textContent = STATE.points;
+    document.getElementById('completed').textContent = done + '/' + total;
+    document.getElementById('progText').textContent = done + ' / ' + total + ' exercises';
+    document.getElementById('progPct').textContent = pct + '%';
+    document.getElementById('progFill').style.width = pct + '%';
+    
+    let ranks = [
+        {min:0, name:'BEGINNER'},
+        {min:300, name:'NOVICE'},
+        {min:600, name:'LEARNER'},
+        {min:1000, name:'COMPETENT'},
+        {min:1500, name:'PROFICIENT'},
+        {min:2000, name:'EXPERT'},
+        {min:2300, name:'MASTER'}
+    ];
+    document.getElementById('rank').textContent = ranks.filter(r => STATE.points >= r.min).pop().name;
+}
+
+function updateQuickRef() {
+    // Determine current chapter
+    let currentChapter = 'Ch1: Navigation'; // default
+    
+    if (STATE.currentItem) {
+        if (TUTORIALS[STATE.currentItem]) {
+            currentChapter = TUTORIALS[STATE.currentItem].chapter;
+        } else {
+            let ex = EXERCISES.find(e => e.id === STATE.currentItem);
+            if (ex) currentChapter = ex.chapter;
+        }
+    }
+    
+    // Chapter-specific quick references
+    const quickRefs = {
+        'Ch1: Navigation': `
+            <div class="ref-section"><div class="ref-title">📂 Navigation Commands</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DIR</span><span class="ref-cmd-desc">List files & folders</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DIR /B</span><span class="ref-cmd-desc">Names only (bare)</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DIR /AH</span><span class="ref-cmd-desc">Show hidden files</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">CD folder</span><span class="ref-cmd-desc">Enter folder</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">CD ..</span><span class="ref-cmd-desc">Go up one level</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">CD</span><span class="ref-cmd-desc">Show current path</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">CLS</span><span class="ref-cmd-desc">Clear screen</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">ECHO text</span><span class="ref-cmd-desc">Display message</span></div></div>`,
+            
+        'Ch2: Files': `
+            <div class="ref-section"><div class="ref-title">📄 File Commands</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">TYPE file</span><span class="ref-cmd-desc">View file contents</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">COPY src dst</span><span class="ref-cmd-desc">Copy a file</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DEL file</span><span class="ref-cmd-desc">Delete file</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">REN old new</span><span class="ref-cmd-desc">Rename file</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">MD folder</span><span class="ref-cmd-desc">Create folder</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">RD folder</span><span class="ref-cmd-desc">Remove folder</span></div></div>
+            <div class="ref-section"><div class="ref-title">⚠️ Warning</div>
+            <div class="ref-cmd"><span class="ref-cmd-desc">DEL and RD are permanent - no Recycle Bin!</span></div></div>`,
+            
+        'Ch3: Variables': `
+            <div class="ref-section"><div class="ref-title">🔧 Variable Commands</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">SET</span><span class="ref-cmd-desc">List all variables</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">SET name=value</span><span class="ref-cmd-desc">Create variable</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">SET /A x=5+3</span><span class="ref-cmd-desc">Math calculation</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">ECHO %name%</span><span class="ref-cmd-desc">Display variable</span></div></div>
+            <div class="ref-section"><div class="ref-title">📊 System Variables</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">%USERNAME%</span><span class="ref-cmd-desc">Current user</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">%DATE%</span><span class="ref-cmd-desc">Today's date</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">%TIME%</span><span class="ref-cmd-desc">Current time</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">%CD%</span><span class="ref-cmd-desc">Current directory</span></div></div>`,
+            
+        'Ch4: Pipes': `
+            <div class="ref-section"><div class="ref-title">➡️ Redirection</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">cmd > file</span><span class="ref-cmd-desc">Output to file (overwrite)</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">cmd >> file</span><span class="ref-cmd-desc">Append to file</span></div></div>
+            <div class="ref-section"><div class="ref-title">🔗 Pipes & Chaining</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">cmd1 | cmd2</span><span class="ref-cmd-desc">Pipe output</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">cmd1 & cmd2</span><span class="ref-cmd-desc">Run both</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">cmd1 && cmd2</span><span class="ref-cmd-desc">Run if first succeeds</span></div></div>
+            <div class="ref-section"><div class="ref-title">💡 Examples</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DIR > list.txt</span><span class="ref-cmd-desc">Save dir listing</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">DIR | MORE</span><span class="ref-cmd-desc">Page through</span></div></div>`,
+            
+        'Ch5: Network': `
+            <div class="ref-section"><div class="ref-title">🌐 Network Commands</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">HOSTNAME</span><span class="ref-cmd-desc">Computer name</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">IPCONFIG</span><span class="ref-cmd-desc">IP configuration</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">IPCONFIG /ALL</span><span class="ref-cmd-desc">Full network details</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">PING host</span><span class="ref-cmd-desc">Test connectivity</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">NETSTAT</span><span class="ref-cmd-desc">Active connections</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">NETSTAT -an</span><span class="ref-cmd-desc">All connections numeric</span></div></div>`,
+            
+        'Ch6: System': `
+            <div class="ref-section"><div class="ref-title">💻 System Commands</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">WHOAMI</span><span class="ref-cmd-desc">Current user</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">SYSTEMINFO</span><span class="ref-cmd-desc">System details</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">TASKLIST</span><span class="ref-cmd-desc">Running processes</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">TASKKILL /PID n</span><span class="ref-cmd-desc">Kill by ID</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">TASKKILL /IM name</span><span class="ref-cmd-desc">Kill by name</span></div></div>`,
+            
+        'Ch7: Batch': `
+            <div class="ref-section"><div class="ref-title">📜 Batch Scripting</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">@ECHO OFF</span><span class="ref-cmd-desc">Hide commands</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">REM comment</span><span class="ref-cmd-desc">Add comment</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">PAUSE</span><span class="ref-cmd-desc">Wait for key</span></div></div>
+            <div class="ref-section"><div class="ref-title">❓ Conditionals & Loops</div>
+            <div class="ref-cmd"><span class="ref-cmd-name">IF cond cmd</span><span class="ref-cmd-desc">Conditional</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">IF EXIST file</span><span class="ref-cmd-desc">Check file exists</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">FOR /L %i IN</span><span class="ref-cmd-desc">Number loop</span></div>
+            <div class="ref-cmd"><span class="ref-cmd-name">(start,step,end)</span><span class="ref-cmd-desc">Loop range</span></div></div>`
+    };
+    
+    document.getElementById('quickRef').innerHTML = quickRefs[currentChapter] || quickRefs['Ch1: Navigation'];
+}
+
+// ============================================
+// PERSISTENCE
+// ============================================
+function saveProgress() {
+    try { 
+        let data = { points: STATE.points, completed: Array.from(STATE.completed) };
+        localStorage.setItem('barzan-v5', JSON.stringify(data)); 
+        console.log('Progress saved:', data);
+    } catch(e) { 
+        console.error('Save failed:', e); 
+    }
+}
+
+function loadProgress() {
+    try {
+        let data = JSON.parse(localStorage.getItem('barzan-v5'));
+        if (data) { 
+            STATE.points = data.points || 0; 
+            STATE.completed = new Set(data.completed || []); 
+            console.log('Progress loaded:', data);
+        }
+    } catch(e) { 
+        console.error('Load failed:', e); 
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+// Debug helpers (accessible from browser console)
+window.DEBUG = {
+    completeChapter: function(chapterName) {
+        let exercises = getChapterExercises(chapterName);
+        exercises.forEach(ex => {
+            if (!STATE.completed.has(ex.id)) {
+                STATE.completed.add(ex.id);
+                STATE.points += ex.points;
+            }
+        });
+        saveProgress();
+        updateStats();
+        updateNav();
+        console.log('Completed chapter:', chapterName);
+    },
+    resetProgress: function() {
+        STATE.points = 0;
+        STATE.completed = new Set();
+        localStorage.removeItem('barzan-v5');
+        updateStats();
+        updateNav();
+        console.log('Progress reset');
+    },
+    showState: function() {
+        console.log('Points:', STATE.points);
+        console.log('Completed:', Array.from(STATE.completed));
+        CHAPTERS.forEach(ch => {
+            let exercises = getChapterExercises(ch.name);
+            let done = exercises.filter(ex => STATE.completed.has(ex.id)).length;
+            console.log(ch.name, '-', done + '/' + exercises.length, isChapterComplete(ch.name) ? '✓' : '');
+        });
+    }
+};
+
+document.getElementById('cmdInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') executeCommand();
+    else if (e.key === 'ArrowUp' && STATE.hIdx > 0) { 
+        e.preventDefault(); 
+        STATE.hIdx--; 
+        e.target.value = STATE.hist[STATE.hIdx]; 
+    }
+    else if (e.key === 'ArrowDown') { 
+        e.preventDefault(); 
+        STATE.hIdx = Math.min(STATE.hIdx + 1, STATE.hist.length); 
+        e.target.value = STATE.hist[STATE.hIdx] || ''; 
+    }
+});
+
+function init() {
+    loadProgress();
+    initFS({});
+    updateStats();
+    updateNav();
+    updateDisplay();
+    updateQuickRef();
+    
+    // Load first tutorial
+    loadItem('tut-nav');
+}
+
+init();
+</script>
+</body>
+</html>
